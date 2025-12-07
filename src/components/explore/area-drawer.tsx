@@ -1,0 +1,63 @@
+"use client";
+
+import { Icon } from "@/components/icon";
+import { SummaryCard } from "./summary-card";
+import { HotspotsList } from "./hotspots-list";
+import { TopAreasList } from "./top-areas-list";
+
+interface AreaDrawerProps {
+    business: string;
+    location: string;
+    data: any;
+    onZoomToHotspot?: (lat: number, lng: number) => void;
+}
+
+export function AreaDrawer({
+    business,
+    location,
+    data,
+    onZoomToHotspot,
+}: AreaDrawerProps) {
+    return (
+        <aside className="flex h-full w-full max-w-[500px] flex-shrink-0 flex-col border-r border-border-light bg-surface-light shadow-xl">
+            <div className="flex flex-col h-full overflow-hidden">
+                <div className="sticky top-0 z-50 bg-surface-light border-b border-border-light shadow-sm p-6 shrink-0">
+                    <div className="flex items-center gap-4 mb-4">
+                        <button className="flex size-10 items-center justify-center rounded-lg text-text-secondary-light hover:bg-gray-100 transition-all">
+                            <Icon
+                                name="arrow_back_ios_new"
+                                className="text-xl"
+                            />
+                        </button>
+                        <p className="text-text-primary-light text-base font-medium flex-1 truncate hover:underline cursor-pointer">
+                            Change search
+                        </p>
+                    </div>
+                    <div className="pb-2">
+                        <h1 className="text-text-primary-light text-xl font-bold leading-tight">
+                            {business} in {location}
+                        </h1>
+                        <p className="text-text-secondary-light text-sm mt-1">
+                            Yelp AI overview of your opportunities
+                        </p>
+                    </div>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-6 space-y-8 pb-24">
+                    <SummaryCard
+                        competitors={data.competitors}
+                        hotspots={data.hotspots}
+                        avgRating={data.avgRating}
+                    />
+                    <hr />
+                    <HotspotsList
+                        hotspots={data.competitorHotspots}
+                        onZoomToHotspot={onZoomToHotspot}
+                    />
+                    <hr />
+                    <TopAreasList areas={data.topAreas} />
+                </div>
+            </div>
+        </aside>
+    );
+}
