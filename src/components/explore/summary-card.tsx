@@ -11,6 +11,9 @@ export function SummaryCard({
     hotspots,
     avgRating,
 }: SummaryCardProps) {
+    if (!competitors && !hotspots && !avgRating) {
+        return <div className="h-24 bg-gray-200 rounded-lg animate-pulse" />;
+    }
     return (
         <div className="flex flex-col gap-4">
             <h2 className="text-text-primary-light text-lg font-semibold">

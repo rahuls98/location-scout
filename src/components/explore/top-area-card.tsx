@@ -1,13 +1,23 @@
+// src/components/explore/top-area-card.tsx - UPDATED to match your design
 "use client";
 
+import Link from "next/link";
 import { Icon } from "@/components/icon";
+import { TopArea } from "@/lib/analysis/types";
 
 interface TopAreaCardProps {
     rank: number;
-    area: any;
+    area: TopArea;
+    business: string; // ✅ NEW - for navigation
+    location: string; // ✅ NEW - for navigation
 }
 
-export function TopAreaCard({ rank, area }: TopAreaCardProps) {
+export function TopAreaCard({
+    rank,
+    area,
+    business,
+    location,
+}: TopAreaCardProps) {
     const getColor = (score: number) => {
         if (score >= 8)
             return { bg: "success", text: "success", icon: "trending_up" };
@@ -19,18 +29,16 @@ export function TopAreaCard({ rank, area }: TopAreaCardProps) {
     const color = getColor(area.score);
 
     return (
-        <div
-            className={`group flex flex-col gap-4 rounded-xl p-5 shadow-soft transition-all border border-border-light`}
-        >
+        <div className="group flex flex-col gap-4 rounded-xl p-5 shadow-soft transition-all border border-border-light hover:border-primary/50 hover:shadow-lg">
             <div className="flex items-start justify-between gap-4">
                 <h3 className="text-lg font-bold text-text-primary-light">
                     #{rank} – {area.name}
                 </h3>
                 <div
-                    className={`flex items-center gap-2 rounded-full bg-${color.bg}/10 px-3 py-1 text-xs font-semibold text-${color.text}`}
+                    className={`flex items-center gap-2 rounded-full bg-${color.bg}/10 px-3 py-1 text-xs font-semibold text-${color.text} group-hover:scale-105 transition-transform`}
                 >
                     <Icon name={color.icon} className="text-base" />
-                    <span>{area.score} / 10</span>
+                    <span>{area.score.toFixed(1)} / 10</span>
                 </div>
             </div>
 
@@ -49,7 +57,10 @@ export function TopAreaCard({ rank, area }: TopAreaCardProps) {
                     with local demographics
                 </li>
                 <li className="font-medium text-text-primary-light">
-                    {area.gaps ? area.gaps[0] : "Strong price power"}
+                    {area.gaps?.[0] || "Strong price power"}
+                </li>
+                <li className="font-medium text-text-primary-light">
+                    {area.gaps?.[1] || "Growing demand"}
                 </li>
             </ul>
 
@@ -57,9 +68,17 @@ export function TopAreaCard({ rank, area }: TopAreaCardProps) {
                 Est. rent: {area.rent} • Foot traffic: {area.traffic}
             </p>
 
-            <button className="text-muted-foreground hover:text-primary cursor-pointer font-medium text-sm self-start transition-colors">
+            {/* ✅ Link + Hover Effects */}
+            <Link
+                href={`/explore/${encodeURIComponent(
+                    business
+                )}/${encodeURIComponent(location)}/area/${encodeURIComponent(
+                    area.name
+                )}`}
+                className="text-muted-foreground hover:text-primary cursor-pointer font-medium text-sm self-start transition-colors group-hover:translate-x-1"
+            >
                 View detailed analysis →
-            </button>
+            </Link>
         </div>
     );
 }

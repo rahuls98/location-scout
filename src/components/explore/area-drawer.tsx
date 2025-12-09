@@ -5,18 +5,30 @@ import { SummaryCard } from "./summary-card";
 import { HotspotsList } from "./hotspots-list";
 import { TopAreasList } from "./top-areas-list";
 
+interface CompetitorMarker {
+    id: string | number;
+    lat: number;
+    lng: number;
+    name: string;
+    rating: number;
+}
+
 interface AreaDrawerProps {
     business: string;
     location: string;
     data: any;
-    onZoomToHotspot?: (lat: number, lng: number) => void;
+    competitors: CompetitorMarker[];
+    onZoomToHotspot: (lat: number, lng: number) => void;
+    analysisLoading: boolean;
 }
 
 export function AreaDrawer({
     business,
     location,
     data,
+    competitors,
     onZoomToHotspot,
+    analysisLoading = false,
 }: AreaDrawerProps) {
     return (
         <aside className="flex h-full w-full max-w-[500px] flex-shrink-0 flex-col border-r border-border-light bg-surface-light shadow-xl">
@@ -38,24 +50,37 @@ export function AreaDrawer({
                             {business} in {location}
                         </h1>
                         <p className="text-text-secondary-light text-sm mt-1">
-                            Yelp AI overview of your opportunities
+                            {analysisLoading
+                                ? "🔍 Analyzing market data..."
+                                : `${data.competitors || 0} competitors found`}
                         </p>
                     </div>
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-6 space-y-8 pb-24">
-                    <SummaryCard
-                        competitors={data.competitors}
-                        hotspots={data.hotspots}
-                        avgRating={data.avgRating}
-                    />
-                    <hr />
-                    <HotspotsList
-                        hotspots={data.competitorHotspots}
-                        onZoomToHotspot={onZoomToHotspot}
-                    />
-                    <hr />
-                    <TopAreasList areas={data.topAreas} />
+                    {analysisLoading ? (
+                        <div className="space-y-6 animate-pulse">
+                            <div className="h-24 bg-gray-200 rounded-lg"></div>
+                            <div className="h-32 bg-gray-200 rounded-lg"></div>
+                            <div className="h-40 bg-gray-200 rounded-lg"></div>
+                        </div>
+                    ) : (
+                        <>
+                            <SummaryCard
+                                competitors={data.competitors}
+                                hotspots={data.hotspots}
+                                avgRating={data.avgRating}
+                            />
+                            <hr />
+                            <HotspotsList
+                                hotspots={data.competitorHotspots}
+                                competitors={competitors}
+                                onZoomToHotspot={onZoomToHotspot}
+                            />
+                            <hr />
+                            <TopAreasList areas={data.topAreas} />
+                        </>
+                    )}
                 </div>
             </div>
         </aside>
