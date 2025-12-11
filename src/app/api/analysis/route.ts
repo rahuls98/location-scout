@@ -1,20 +1,30 @@
+// src/app/api/analysis/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { analyzeBusinessOpportunity } from "@/lib/analysis";
+import { analyzeBusinessOpportunityServer } from "@/lib/domain/analysis.server";
+import type { AnalysisInput } from "@/lib/domain/types";
 
 export async function POST(request: NextRequest) {
     try {
-        const { business, location } = await request.json();
+        const { business, location } = (await request.json()) as AnalysisInput;
 
-        const result = await analyzeBusinessOpportunity({ business, location });
+        if (!business || !location) {
+            return NextResponse.json(
+                { success: false, error: "business and location are required" },
+                { status: 400 }
+            );
+        }
 
-        return NextResponse.json({ success: true, data: result });
+        const data = await analyzeBusinessOpportunityServer({
+            business,
+            location,
+        });
+        return NextResponse.json({ success: true, data });
     } catch (error) {
+        const message =
+            error instanceof Error ? error.message : "Analysis failed";
+        console.error("❌ /api/analysis error:", message);
         return NextResponse.json(
-            {
-                success: false,
-                error:
-                    error instanceof Error ? error.message : "Analysis failed",
-            },
+            { success: false, error: message },
             { status: 500 }
         );
     }

@@ -1,3 +1,4 @@
+// components/landing/feature-card.tsx
 "use client";
 
 import { Card } from "@/components/ui/card";

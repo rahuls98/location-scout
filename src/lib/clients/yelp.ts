@@ -1,21 +1,12 @@
+// lib/clients/yelp.ts
 import axios from "axios";
 
 const YELP_V3_BASE = "https://api.yelp.com/v3";
 const YELP_AI_BASE = "https://api.yelp.com";
 
-export const yelpClient = axios.create({
-    baseURL: YELP_V3_BASE,
-    headers: { "Content-Type": "application/json" },
-});
-
-// ✅ SERVER + CLIENT V3 client
 export async function getYelpV3Client() {
-    const apiKey =
-        typeof window !== "undefined"
-            ? process.env.NEXT_PUBLIC_YELP_API_KEY
-            : process.env.YELP_API_KEY; // ✅ Server fallback
-
-    if (!apiKey) throw new Error("Yelp API key missing");
+    const apiKey = process.env.YELP_API_KEY;
+    if (!apiKey) throw new Error("YELP_API_KEY missing from server env");
 
     return axios.create({
         baseURL: YELP_V3_BASE,
@@ -26,17 +17,12 @@ export async function getYelpV3Client() {
     });
 }
 
-// ✅ SERVER + CLIENT AI client
 export async function getYelpAIClient() {
-    const apiKey =
-        typeof window !== "undefined"
-            ? process.env.NEXT_PUBLIC_YELP_API_KEY
-            : process.env.YELP_API_KEY; // ✅ Server fallback
-
-    if (!apiKey) throw new Error("Yelp API key missing");
+    const apiKey = process.env.YELP_API_KEY;
+    if (!apiKey) throw new Error("YELP_API_KEY missing from server env");
 
     return axios.create({
-        baseURL: YELP_AI_BASE, // api.yelp.com (no /v3)
+        baseURL: YELP_AI_BASE,
         headers: {
             Authorization: `Bearer ${apiKey}`,
             Accept: "application/json",
