@@ -47,6 +47,7 @@ type Props = {
     location: string;
     area: string;
     data: DetailedAnalysisData;
+    coords: [number, number];
 };
 
 export default function DetailedAnalysisPage({
@@ -54,6 +55,7 @@ export default function DetailedAnalysisPage({
     location,
     area,
     data,
+    coords,
 }: Props) {
     const demographics = data.demographics ?? [];
     const competitors = data.competitors ?? [];
@@ -71,7 +73,7 @@ export default function DetailedAnalysisPage({
     const [mapInstance, setMapInstance] = useState<any>(null);
 
     const centerMap = useCallback((map: any) => {
-        map.setView([42.3876, -71.0995], 15);
+        map.setView([coords[0], coords[1]], 15);
     }, []);
 
     useEffect(() => {

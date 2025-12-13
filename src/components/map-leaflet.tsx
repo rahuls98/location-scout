@@ -46,7 +46,7 @@ if (typeof window !== "undefined") {
 const redCircleIcon = new L.DivIcon({
     html: `
     <div style="
-      width: 12px; height: 12px;
+      width: 20px; height: 20px;
       background: #D32323;
       border: 2px solid #FFFFFF;
       border-radius: 50%;
@@ -54,8 +54,8 @@ const redCircleIcon = new L.DivIcon({
     "></div>
   `,
     className: "p-0 m-0",
-    iconSize: [16, 16],
-    iconAnchor: [8, 8],
+    iconSize: [20, 20],
+    iconAnchor: [10, 10],
 });
 
 export default function MapLeaflet({

@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { MissingParameters } from "@/app/(analysis)/missing-parameters";
 import { LoadingScreen } from "@/app/(analysis)/loading-screen";
 import { NoResults } from "@/app/(analysis)/no-results";
@@ -16,12 +16,15 @@ export default function DetailedAnalysisRoute() {
         location?: string;
         area?: string;
     }>();
+    const searchParams = useSearchParams();
 
     const business = params.business;
     const location = params.location;
     const area = params.area;
+    const latitude = Number(searchParams.get("latitude"));
+    const longitude = Number(searchParams.get("longitude"));
 
-    if (!business || !location || !area) {
+    if (!business || !location || !area || !latitude || !longitude) {
         return <MissingParameters />;
     }
 
@@ -56,6 +59,7 @@ export default function DetailedAnalysisRoute() {
             business={decodeURIComponent(business)}
             location={decodeURIComponent(location)}
             area={decodeURIComponent(area)}
+            coords={[latitude, longitude]}
         />
     );
 }

@@ -76,7 +76,11 @@ export function TopAreaCard({
                         business
                     )}/${encodeURIComponent(
                         location
-                    )}/area/${encodeURIComponent(area.name)}`}
+                    )}/area/${encodeURIComponent(
+                        area.name
+                    )}?latitude=${encodeURIComponent(
+                        area.latitude
+                    )}&longitude=${encodeURIComponent(area.longitude)}`}
                     className="transition-colors hover:text-primary hover:underline"
                 >
                     View detailed analysis →
