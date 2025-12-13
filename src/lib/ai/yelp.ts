@@ -3,12 +3,16 @@ import { getYelpV3Client, getYelpAIClient } from "@/lib/clients/yelp";
 import {
     TOP_AREAS_YELP_PROMPT,
     DETAILED_ANALYSIS_YELP_PROMPT,
+    CUSTOMER_REVIEW_INSIGHTS_YELP_PROMPT,
+    OFFERING_INSIGHTS_YELP_PROMPT,
 } from "./prompts";
 import { parseTopAreasWithLLM, parseDetailedAreaWithLLM } from "./llm";
 import type {
     TopArea,
     DetailedAreaData,
     YelpBusiness,
+    CustomerReviewInsightsInput,
+    CustomerReviewInsightsResponse,
 } from "@/lib/domain/types";
 
 export async function searchCompetitors(
@@ -62,4 +66,52 @@ export async function fetchDetailedAreaFromYelpAI(input: {
     const yelpText: string = data?.response?.text || "";
     const parsed = await parseDetailedAreaWithLLM(yelpText, area);
     return { data: parsed, yelpText };
+}
+
+export async function fetchCustomerReviewInsightsFromYelpAI(
+    input: CustomerReviewInsightsInput
+): Promise<CustomerReviewInsightsResponse> {
+    const { query, business, location, area } = input;
+
+    const client = await getYelpAIClient();
+    const { data } = await client.post("/ai/chat/v2", {
+        requestcontext: { skip_text_generation: false },
+        query: CUSTOMER_REVIEW_INSIGHTS_YELP_PROMPT({
+            query,
+            business,
+            area,
+            location,
+        }),
+    });
+
+    const reviewInsights = data?.response?.text?.trim();
+    if (!reviewInsights) {
+        throw new Error("Yelp AI returned no insights");
+    }
+    return {
+        query,
+        business,
+        area,
+        location,
+        insights: reviewInsights,
+    };
+}
+
+export async function fetchServiceOfferingInsightsFromYelpAI(
+    business: string,
+    area: string,
+    location: string
+): Promise<string> {
+    const client = await getYelpAIClient();
+    const { data } = await client.post("/ai/chat/v2", {
+        requestcontext: { skiptextgeneration: false },
+        query: OFFERING_INSIGHTS_YELP_PROMPT({ business, area, location }),
+    });
+
+    const insights = data?.response?.text?.trim();
+    if (!insights) {
+        throw new Error("Yelp AI returned no service insights");
+    }
+
+    return insights;
 }

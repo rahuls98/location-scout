@@ -11,7 +11,7 @@ import {
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/layout/header";
 import { AreaDrawer } from "@/components/analysis/area-drawer";
-import { MapContainerComponent } from "@/components/analysis/map-container";
+import { MapContainerComponent } from "@/components/map-container";
 import { getViewportInfo, getAreaTitleFromCenter } from "@/lib/maps/utils";
 import type { SummaryMetrics, TopArea, YelpBusiness } from "@/lib/domain/types";
 
@@ -44,10 +44,10 @@ export function AnalysisPage({
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
 
-    const handleZoomToHotspot = useCallback(
-        (lat: number, lng: number) => {
+    const handleZoomToArea = useCallback(
+        (lat: number, lng: number, zoomLevel: number = 15) => {
             if (!mapInstance) return;
-            mapInstance.setView([lat, lng], 14);
+            mapInstance.setView([lat, lng], zoomLevel);
         },
         [mapInstance]
     );
@@ -135,7 +135,7 @@ export function AnalysisPage({
                     location={location}
                     data={data}
                     competitors={competitorMarkers}
-                    onZoomToHotspot={handleZoomToHotspot}
+                    onZoomToArea={handleZoomToArea}
                     analysisLoading={isPending}
                 />
                 <MapContainerComponent

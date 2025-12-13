@@ -23,11 +23,15 @@ export function MapContainerComponent({
     competitors,
 }: MapContainerProps) {
     return (
-        <main className="relative min-h-0 flex-1">
-            <MapLeafletNoSSR
-                competitors={competitors}
-                onMapReady={onMapReady}
-            />
-        </main>
+        <div className="h-full w-full rounded-md border border-border overflow-hidden">
+            {" "}
+            <main className="h-full w-full relative min-h-0 flex-1">
+                {" "}
+                <MapLeafletNoSSR
+                    competitors={competitors}
+                    onMapReady={onMapReady}
+                />
+            </main>
+        </div>
     );
 }

@@ -28,7 +28,6 @@ export async function parseTopAreasWithLLM(
     if (!yelpText) return [];
 
     try {
-        console.log(yelpText);
         const client = await getNvidiaClient();
         const completion = await client.chat.completions.create({
             model: "nvidia/llama-3.3-nemotron-super-49b-v1.5",

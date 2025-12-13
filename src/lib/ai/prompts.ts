@@ -14,10 +14,11 @@ List the **top 3 neighborhoods in ${location} for opening a ${business}**. For e
 4. Approximate rent range: "$Xk-Yk/mo"
 5. Approximate foot traffic: Very High / High / Medium / Low
 6. Overall score: X.X/10
+7. Latitude,Longitude
 
 Format EACH line exactly like this, with no extra text before or after:
 
-[NAME] - [X.X/10] - [Low/Medium/High] ([#] comp) - Gap1, Gap2 - $[Xk-Yk]/mo - [Traffic]
+[NAME] - [X.X/10] - [Low/Medium/High] ([#] comp) - Gap1, Gap2 - $[Xk-Yk]/mo - [Traffic] - [Latitude,Longitude]
 
 Rules:
 - Always produce exactly 3 lines if possible.
@@ -48,7 +49,7 @@ export const PARSE_TOP_AREAS_PROMPT = (yelpResponse: string): string =>
     `You are a JSON generator. Convert the following Yelp AI output into a single JSON object.
 
 The input SHOULD be 3 lines in this exact format:
-[NAME] - [X.X/10] - [Low/Medium/High] ([#] comp) - Gap1, Gap2 - $[Xk-Yk]/mo - [Traffic]
+[NAME] - [X.X/10] - [Low/Medium/High] ([#] comp) - Gap1, Gap2 - $[Xk-Yk]/mo - [Traffic] - [Latitude,Longitude]
 
 If you see any extra commentary, reasoning, or text that does not match this pattern, IGNORE it and only use the lines that match the pattern.
 
@@ -64,6 +65,8 @@ You MUST output JSON in this exact shape:
       "gaps": [string, string],
       "rent": string,           // "$Xk-Yk/mo"
       "traffic": "Very High" | "High" | "Medium" | "Low"
+      "latitude": number,
+      "longitude": number
     }
   ]
 }
@@ -136,3 +139,32 @@ Yelp AI analysis to convert:
 
 ${yelpResponse}
 `.trim();
+
+export const CUSTOMER_REVIEW_INSIGHTS_YELP_PROMPT = ({
+    query,
+    business,
+    area,
+    location,
+}: {
+    query: string;
+    business: string;
+    area: string;
+    location: string;
+}): string =>
+    `Summarize what customer reviews for businesses in the ${business} market in and around ${area} (near ${location}) say about ${query}. Don't list locations"`.trim();
+
+export const OFFERING_INSIGHTS_YELP_PROMPT = ({
+    business,
+    area,
+    location,
+}: {
+    business: string;
+    area: string;
+    location: string;
+}): string =>
+    `Summarize service offering insights for ${business} in and around ${area} (near ${location}), focusing on how well services meet expectations and perceived value for money. 
+Look at recent reviews and produce one cohesive, plain-English paragraph that combines: 
+(1) themes where customers “want more” from the experience (e.g., missing services, lack of personalization or atmosphere), and 
+(2) themes where customers feel they did not get their money's worth (e.g., rushed cuts, inconsistent quality, pricing vs. outcome). 
+Do not mention specific business names or locations. 
+Also briefly suggest 2-3 concrete service or experience improvements that could address both types of concerns.`.trim();

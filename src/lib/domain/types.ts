@@ -45,6 +45,8 @@ export interface TopArea {
     gaps: [string, string];
     rent: string;
     traffic: "High" | "Very High" | "Medium";
+    latitude: number;
+    longitude: number;
 }
 
 export interface SummaryMetrics {
@@ -82,4 +84,25 @@ export interface YelpBusiness {
         alias: string;
         title: string;
     }>;
+}
+
+export interface CustomerReviewInsightsInput {
+    query: string;
+    business: string;
+    area: string;
+    location: string;
+}
+
+export interface CustomerReviewInsightsResponse {
+    query: string;
+    business: string;
+    area: string;
+    location: string;
+    insights: string;
+}
+
+export interface ServiceOfferingInsightsInput {
+    business: string;
+    area: string;
+    location: string;
 }

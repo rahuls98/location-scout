@@ -9,6 +9,7 @@ interface TopAreaCardProps {
     area: TopArea;
     business: string;
     location: string;
+    onZoomToArea: (lat: number, lng: number, zoomLevel: number) => void;
 }
 
 export function TopAreaCard({
@@ -16,6 +17,7 @@ export function TopAreaCard({
     area,
     business,
     location,
+    onZoomToArea,
 }: TopAreaCardProps) {
     const color =
         area.score >= 8
@@ -29,7 +31,7 @@ export function TopAreaCard({
 
     return (
         <div className="group flex flex-col gap-4 rounded-xl border border-border bg-card p-5 shadow-sm transition-all">
-            <div className="flex items-start justify-between gap-4 min-h-[3rem]">
+            <div className="flex items-start justify-between gap-4 min-h-[2rem]">
                 <h3 className="text-lg font-semibold text-foreground leading-tight break-words min-w-0 flex-1 pr-2 line-clamp-2">
                     #{rank} – {area.name}
                 </h3>
@@ -41,35 +43,45 @@ export function TopAreaCard({
                 </div>
             </div>
 
-            <ul className="list-disc space-y-1 pl-5 text-sm marker:text-muted-foreground">
-                <li>
-                    <span className="font-medium text-foreground">
-                        {area.saturation} saturation
-                    </span>{" "}
-                    • {area.competitors} competitors
-                </li>
-                <li className="font-medium text-foreground">
-                    {area.gaps?.[0] ?? "Strong local demand"}
-                </li>
-                <li className="font-medium text-foreground">
-                    {area.gaps?.[1] ?? "Room for differentiation"}
-                </li>
-            </ul>
-
             <p className="text-xs text-muted-foreground">
-                Est. rent: {area.rent} • Foot traffic: {area.traffic}
+                {area.saturation} saturation • {area.traffic} foot traffic •{" "}
+                {area.rent} est. rent
             </p>
 
-            <Link
-                href={`/detailed-analysis/${encodeURIComponent(
-                    business
-                )}/${encodeURIComponent(location)}/area/${encodeURIComponent(
-                    area.name
-                )}`}
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-            >
-                View detailed analysis →
-            </Link>
+            <div className="font-small text-foreground text-sm">
+                <div>
+                    <h4 className="text-foreground mb-1 text-sm">
+                        Market gaps:
+                    </h4>
+                    <ul className="list-disc space-y-1 pl-5 text-sm marker:text-muted-foreground">
+                        <li>{area.gaps?.[0] ?? "Strong local demand"}</li>
+                        <li>{area.gaps?.[1] ?? "Room for differentiation"}</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div className="flex gap-2 text-sm font-medium text-muted-foreground">
+                <Link
+                    href=""
+                    className="transition-colors hover:text-primary hover:underline"
+                    onClick={() =>
+                        onZoomToArea?.(area.latitude, area.longitude, 18)
+                    }
+                >
+                    Zoom to area
+                </Link>
+                •
+                <Link
+                    href={`/detailed-analysis/${encodeURIComponent(
+                        business
+                    )}/${encodeURIComponent(
+                        location
+                    )}/area/${encodeURIComponent(area.name)}`}
+                    className="transition-colors hover:text-primary hover:underline"
+                >
+                    View detailed analysis →
+                </Link>
+            </div>
         </div>
     );
 }

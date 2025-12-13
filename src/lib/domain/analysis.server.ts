@@ -1,6 +1,17 @@
 // src/lib/domain/analysis.server.ts
-import type { AnalysisInput, AnalysisResult, TopArea } from "./types";
-import { searchCompetitors, fetchTopAreasFromYelpAI } from "@/lib/ai/yelp";
+import type {
+    AnalysisInput,
+    AnalysisResult,
+    CustomerReviewInsightsInput,
+    CustomerReviewInsightsResponse,
+    TopArea,
+} from "./types";
+import {
+    searchCompetitors,
+    fetchTopAreasFromYelpAI,
+    fetchCustomerReviewInsightsFromYelpAI,
+    fetchServiceOfferingInsightsFromYelpAI,
+} from "@/lib/ai/yelp";
 import { calculateSummaryMetrics } from "./analysis.utils";
 
 export async function analyzeBusinessOpportunityServer(
@@ -22,4 +33,22 @@ export async function analyzeBusinessOpportunityServer(
     }
 
     return { metrics, topAreas, competitors };
+}
+
+export async function getCustomerReviewInsights(
+    input: CustomerReviewInsightsInput
+): Promise<CustomerReviewInsightsResponse> {
+    return await fetchCustomerReviewInsightsFromYelpAI(input);
+}
+
+export async function getServiceOfferingInsights(
+    business: string,
+    area: string,
+    location: string
+): Promise<string> {
+    return await fetchServiceOfferingInsightsFromYelpAI(
+        business,
+        area,
+        location
+    );
 }

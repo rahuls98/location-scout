@@ -21,13 +21,13 @@ interface CompetitorMarker {
 interface HotspotsListProps {
     hotspots: Hotspot[];
     competitors: CompetitorMarker[];
-    onZoomToHotspot?: (lat: number, lng: number) => void;
+    onZoomToArea?: (lat: number, lng: number) => void;
 }
 
 export function HotspotsList({
     hotspots,
     competitors: _competitors,
-    onZoomToHotspot,
+    onZoomToArea,
 }: HotspotsListProps) {
     return (
         <div className="flex flex-col gap-4">
@@ -39,7 +39,7 @@ export function HotspotsList({
                     <HotspotRow
                         key={i}
                         {...spot}
-                        onZoom={() => onZoomToHotspot?.(spot.lat, spot.lng)}
+                        onZoom={() => onZoomToArea?.(spot.lat, spot.lng)}
                     />
                 ))}
             </div>
@@ -72,7 +72,7 @@ function HotspotRow({
                 </p>
             </div>
             <span className="whitespace-nowrap text-sm font-medium text-primary transition-all group-hover:underline">
-                Zoom to area →
+                Zoom to area
             </span>
         </button>
     );

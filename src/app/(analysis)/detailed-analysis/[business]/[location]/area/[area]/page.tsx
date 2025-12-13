@@ -6,7 +6,7 @@ import { useParams } from "next/navigation";
 import { MissingParameters } from "@/app/(analysis)/missing-parameters";
 import { LoadingScreen } from "@/app/(analysis)/loading-screen";
 import { NoResults } from "@/app/(analysis)/no-results";
-import { DetailedAnalysisPage } from "@/components/detailed-analysis/detailed-analysis-page";
+import DetailedAnalysisPage from "@/components/detailed-analysis/detailed-analysis-page";
 import { useDetailedAnalysis } from "@/lib/domain/analysis";
 import type { DetailedAreaData } from "@/lib/domain/types";
 
@@ -28,6 +28,8 @@ export default function DetailedAnalysisRoute() {
     const { loading, error, data, loadDetailedArea } = useDetailedAnalysis();
 
     useEffect(() => {
+        if (data) return;
+
         loadDetailedArea({
             business: decodeURIComponent(business),
             location: decodeURIComponent(location),

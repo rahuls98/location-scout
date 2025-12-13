@@ -2,7 +2,13 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import type { AnalysisInput, AnalysisResult, DetailedAreaData } from "./types";
+import type {
+    AnalysisInput,
+    AnalysisResult,
+    DetailedAreaData,
+    CustomerReviewInsightsInput,
+    CustomerReviewInsightsResponse,
+} from "./types";
 
 const ANALYSIS_CACHE_KEY = "analysis-cache";
 
@@ -142,4 +148,109 @@ export async function getDetailedAnalysisData(
 
     const { data } = await response.json();
     return data as DetailedAreaData;
+}
+
+export function useCustomerReviewsInsight() {
+    const [insights, setInsights] =
+        useState<CustomerReviewInsightsResponse | null>(null);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const getInsights = useCallback(
+        async (input: CustomerReviewInsightsInput) => {
+            setLoading(true);
+            setError(null);
+
+            try {
+                const response = await fetch("/api/customer-review-insights", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(input),
+                });
+
+                if (!response.ok) {
+                    throw new Error(
+                        `Reviews insight failed: ${response.status}`
+                    );
+                }
+
+                const result = await response.json();
+                if (result.success) {
+                    setInsights(result.data);
+                } else {
+                    throw new Error(result.error || "Unknown error");
+                }
+            } catch (err: any) {
+                const message =
+                    err instanceof Error
+                        ? err.message
+                        : "Reviews insight failed";
+                console.error("Customer reviews insight failed:", message);
+                setError(message);
+                setInsights(null);
+            } finally {
+                setLoading(false);
+            }
+        },
+        []
+    );
+
+    return {
+        insights,
+        getInsights,
+        loading,
+        error,
+    };
+}
+
+export function useServiceOfferingInsights() {
+    const [insights, setInsights] = useState<string>("");
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const getInsights = useCallback(
+        async (business: string, area: string, location: string) => {
+            setLoading(true);
+            setError(null);
+
+            try {
+                const response = await fetch("/api/service-offering-insights", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ business, area, location }),
+                });
+
+                if (!response.ok) {
+                    throw new Error(
+                        `Service insights failed: ${response.status}`
+                    );
+                }
+
+                const result = await response.json();
+                if (result.success) {
+                    setInsights(result.data);
+                } else {
+                    throw new Error(result.error || "Unknown error");
+                }
+            } catch (err: any) {
+                const message =
+                    err instanceof Error
+                        ? err.message
+                        : "Service insights failed";
+                console.error("Service offering insights failed:", message);
+                setError(message);
+                setInsights("");
+            } finally {
+                setLoading(false);
+            }
+        },
+        []
+    );
+
+    return {
+        insights,
+        getInsights,
+        loading,
+        error,
+    };
 }

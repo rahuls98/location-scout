@@ -1,223 +1,364 @@
 // src/components/detailed-analysis/detailed-analysis-page.tsx
 "use client";
 
-import { Users, MapPin, Clock, Target, TrendingUp } from "lucide-react";
-import type { DetailedAreaData } from "@/lib/domain/types";
-import { Header } from "@/components/layout/header";
+import "leaflet/dist/leaflet.css";
+import { Header } from "../layout/header";
+import { MapContainerComponent } from "@/components/map-container";
+import CompetitorReviewInsightsPanel from "./competitor-review-insights-panel";
+import ServiceOfferingsInsightPanel from "./service-offering-insights-panel";
+import { useCallback, useEffect, useState } from "react";
 
-interface DetailedAnalysisPageProps {
-    data: DetailedAreaData;
+type Demographic = {
+    type: string;
+    value: string;
+};
+
+type Traffic = {
+    weekday?: string;
+    weekend?: string;
+    peak_hours?: string;
+};
+
+type Competitor = {
+    name: string;
+    rating?: number;
+    reviews?: number;
+    price?: string | null;
+    url?: string | null;
+    price_per_sqft?: number | null;
+};
+
+type Gap = {
+    title?: string;
+    description?: string;
+};
+
+type DetailedAnalysisData = {
+    name: string;
+    competitors: Competitor[];
+    demographics: Demographic[];
+    gaps: Gap[];
+    traffic?: Traffic;
+    success_factors: string[];
+};
+
+type Props = {
     business: string;
     location: string;
     area: string;
-}
+    data: DetailedAnalysisData;
+};
 
-export function DetailedAnalysisPage({
-    data,
+export default function DetailedAnalysisPage({
     business,
     location,
     area,
-}: DetailedAnalysisPageProps) {
+    data,
+}: Props) {
+    const demographics = data.demographics ?? [];
+    const competitors = data.competitors ?? [];
+    const gaps = data.gaps ?? [];
+    const traffic = data.traffic;
+    const success_factors = data.success_factors ?? [];
+
+    const topCompetitors = competitors.slice(0, 5);
+    const topSuccessFactors = success_factors.slice(0, 3);
+
+    const hasDemographics = demographics.length > 0;
+    const hasTraffic = !!traffic;
+    const hasGaps = gaps.length > 0;
+
+    const [mapInstance, setMapInstance] = useState<any>(null);
+
+    const centerMap = useCallback((map: any) => {
+        map.setView([42.3876, -71.0995], 15);
+    }, []);
+
+    useEffect(() => {
+        if (mapInstance) {
+            centerMap(mapInstance);
+        }
+    }, [mapInstance, centerMap]);
+
     return (
-        <div className="flex flex-col h-screen overflow-hidden bg-background-light dark:bg-background-dark">
+        <div className="flex min-h-screen flex-col bg-background text-foreground">
             <Header />
-            <main className="flex-1 overflow-y-auto p-6">
-                <div className="max-w-4xl mx-auto space-y-6">
-                    <div className="border-b border-gray-200 dark:border-gray-700 pb-4">
-                        <h1 className="text-3xl font-black tracking-tight text-text-primary-light dark:text-text-primary-dark">
-                            Review
-                        </h1>
-                        <p className="mt-2 text-sm text-text-secondary-light dark:text-text-secondary-dark">
-                            Detailed market analysis for a{" "}
-                            <strong>{business}</strong> in and around{" "}
-                            <strong>{area}</strong>
-                        </p>
+            <main className="flex-1 px-3 py-4 md:px-4 md:py-5 lg:px-5 lg:py-6">
+                <div className="w-full">
+                    {/* Header / Intro */}
+                    <div className="pb-4 flex items-center justify-between">
+                        <div>
+                            <h1 className="text-3xl font-black tracking-tight">
+                                Detailed market analysis
+                            </h1>
+                            <p className="mt-2 text-sm text-muted-foreground">
+                                <strong>{business}</strong> in and around{" "}
+                                <strong>{area}</strong>.
+                            </p>
+                        </div>
                     </div>
 
-                    {/* Demographics */}
-                    <section className="space-y-3">
-                        <div className="flex items-center gap-3">
-                            <Users className="h-6 w-6 text-primary flex-shrink-0" />
-                            <h2 className="text-xl font-bold text-text-primary-light dark:text-text-primary-dark">
-                                Demographics
-                            </h2>
-                        </div>
-                        <div className="ml-9 p-5 rounded-lg border-2 border-gray-200/70 dark:border-gray-700/70 space-y-3">
-                            {data.demographics?.length === 0 && (
-                                <p className="text-sm text-text-secondary-light dark:text-text-secondary-dark">
+                    {/* Dashboard Grid */}
+                    <div className="grid grid-cols-1 gap-3 md:gap-4 lg:grid-cols-3">
+                        {/* Row 1 */}
+                        {/* Location map – dummy layout */}
+                        <section className="flex flex-col gap-2 rounded-lg border border-border bg-card px-3 py-3.5 shadow-sm">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-[18px] text-primary">
+                                        map
+                                    </span>
+                                    <h2 className="text-sm font-semibold leading-tight">
+                                        Location map
+                                    </h2>
+                                </div>
+                            </div>
+                            <div className="h-60 w-full rounded-md border border-border">
+                                <MapContainerComponent
+                                    onMapReady={setMapInstance}
+                                    competitors={[]}
+                                />
+                            </div>
+                        </section>
+
+                        {/* Overview & demographics – unified list style */}
+                        <section className="flex flex-col rounded-lg border border-border bg-card px-3 py-3.5 shadow-sm">
+                            <div className="mb-1.5 flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-[18px] text-primary">
+                                        insights
+                                    </span>
+                                    <h2 className="text-sm font-semibold leading-tight">
+                                        Overview &amp; demographics
+                                    </h2>
+                                </div>
+                            </div>
+
+                            {hasDemographics ? (
+                                <ul className="divide-y divide-border rounded-md">
+                                    {demographics.map((demo, i) => (
+                                        <li key={i} className="px-3 py-2.5">
+                                            <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                                                {demo.type}
+                                            </p>
+                                            <p className="mt-0.5 text-xs md:text-sm leading-snug">
+                                                {demo.value}
+                                            </p>
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p className="mt-1 text-xs text-muted-foreground">
                                     No demographic details available for this
                                     area.
                                 </p>
                             )}
-                            {data.demographics?.map((demo, i) => (
-                                <div key={i} className="flex items-start gap-3">
-                                    <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0 mt-1.5" />
-                                    <div>
-                                        <div className="font-semibold text-primary text-sm uppercase tracking-wide mb-1">
-                                            {demo.type || "N/A"}
-                                        </div>
-                                        <div className="text-text-secondary-light dark:text-text-secondary-dark text-base leading-relaxed">
-                                            {demo.value || "N/A"}
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </section>
+                        </section>
 
-                    {/* Foot traffic */}
-                    <section className="space-y-3">
-                        <div className="flex items-center gap-3">
-                            <MapPin className="h-6 w-6 text-primary flex-shrink-0" />
-                            <h2 className="text-xl font-bold text-text-primary-light dark:text-text-primary-dark">
-                                Foot traffic
-                            </h2>
-                        </div>
-                        <div className="ml-9 space-y-3 p-4 rounded-lg border-2 border-gray-200/70 dark:border-gray-700/70">
-                            <div className="grid grid-cols-2 gap-4 text-text-secondary-light dark:text-text-secondary-dark">
-                                <div>
-                                    <div className="text-sm font-semibold uppercase tracking-wide text-text-primary-light dark:text-text-primary-dark mb-1">
-                                        Weekday
-                                    </div>
-                                    <div>
-                                        {data.traffic?.weekday || "No data"}
-                                    </div>
-                                </div>
-                                <div>
-                                    <div className="text-sm font-semibold uppercase tracking-wide text-text-primary-light dark:text-text-primary-dark mb-1">
-                                        Weekend
-                                    </div>
-                                    <div>
-                                        {data.traffic?.weekend || "No data"}
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="pt-3 mt-3 border-t border-gray-300/70 dark:border-gray-600/70">
+                        {/* Foot traffic – unified list style using traffic JSON */}
+                        <section className="flex flex-col rounded-lg border border-border bg-card px-3 py-3.5 shadow-sm">
+                            <div className="mb-1.5 flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                    <Clock className="h-4 w-4 text-primary" />
-                                    <span className="text-sm font-semibold text-text-primary-light dark:text-text-primary-dark">
-                                        Peak hours
+                                    <span className="material-symbols-outlined text-[18px] text-primary">
+                                        directions_walk
                                     </span>
-                                </div>
-                                <div className="mt-1 font-semibold text-lg text-text-primary-light dark:text-text-primary-dark">
-                                    {data.traffic?.peak_hours || "No data"}
+                                    <h2 className="text-sm font-semibold leading-tight">
+                                        Foot traffic
+                                    </h2>
                                 </div>
                             </div>
-                        </div>
-                    </section>
 
-                    {/* Competitors */}
-                    <section className="space-y-3">
-                        <div className="flex items-center gap-3">
-                            <Users className="h-6 w-6 text-primary flex-shrink-0" />
-                            <h2 className="text-xl font-bold text-text-primary-light dark:text-text-primary-dark">
-                                Top competitors
-                            </h2>
-                        </div>
-                        <div className="ml-9 space-y-2">
-                            {data.competitors.length === 0 && (
-                                <p className="text-sm text-text-secondary-light dark:text-text-secondary-dark">
-                                    No competitors found for this area.
+                            {hasTraffic ? (
+                                <ul className="divide-y divide-border rounded-md">
+                                    {traffic?.weekday && (
+                                        <li className="px-3 py-2.5">
+                                            <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                                                Weekdays
+                                            </p>
+                                            <p className="mt-0.5 text-xs md:text-sm leading-snug">
+                                                {traffic.weekday}
+                                            </p>
+                                        </li>
+                                    )}
+                                    {traffic?.weekend && (
+                                        <li className="px-3 py-2.5">
+                                            <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                                                Weekends
+                                            </p>
+                                            <p className="mt-0.5 text-xs md:text-sm leading-snug">
+                                                {traffic.weekend}
+                                            </p>
+                                        </li>
+                                    )}
+                                    {traffic?.peak_hours && (
+                                        <li className="px-3 py-2.5">
+                                            <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                                                Peak hours
+                                            </p>
+                                            <p className="mt-0.5 text-xs md:text-sm leading-snug">
+                                                {traffic.peak_hours}
+                                            </p>
+                                        </li>
+                                    )}
+                                </ul>
+                            ) : (
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                    No foot traffic details available for this
+                                    area.
                                 </p>
                             )}
-                            {data.competitors.slice(0, 3).map((comp, i) => (
-                                <div
-                                    key={i}
-                                    className="flex items-center gap-3 p-3 rounded-lg border-2 border-gray-200/70 dark:border-gray-700/70"
-                                >
-                                    <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                                        <span className="text-primary font-bold text-sm">
-                                            {i + 1}
-                                        </span>
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="font-semibold text-text-primary-light dark:text-text-primary-dark text-base truncate">
-                                            {comp.name || "Unnamed"}
-                                        </div>
-                                        <div className="flex items-center gap-2 text-sm text-text-secondary-light dark:text-text-secondary-dark">
-                                            <span>
-                                                {Number(
-                                                    comp.reviews || 0
-                                                ).toLocaleString()}{" "}
-                                                reviews
-                                            </span>
-                                            <span>•</span>
-                                            <span className="text-warning font-semibold">
-                                                {Number(
-                                                    comp.rating || 0
-                                                ).toFixed(1)}
-                                            </span>
-                                            <span>•</span>
-                                            <span className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded-full">
-                                                {comp.price || "N/A"}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </section>
+                        </section>
 
-                    {/* Market gaps */}
-                    <section className="space-y-3">
-                        <div className="flex items-center gap-3">
-                            <Target className="h-6 w-6 text-primary flex-shrink-0" />
-                            <h2 className="text-xl font-bold text-text-primary-light dark:text-text-primary-dark">
-                                Market gaps
-                            </h2>
-                        </div>
-                        <div className="ml-9 space-y-3 bg-warning/10 p-5 rounded-xl border-2 border-warning/30">
-                            {data.gaps.length === 0 && (
-                                <p className="text-sm text-text-secondary-light dark:text-text-secondary-dark">
+                        {/* Row 2 */}
+                        {/* Top competitors – unified list style */}
+                        <section className="rounded-lg border border-border bg-card px-3 py-3.5 shadow-sm">
+                            <div className="mb-1.5 flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-[18px] text-primary">
+                                        storefront
+                                    </span>
+                                    <h2 className="text-sm font-semibold leading-tight">
+                                        Top competitors
+                                    </h2>
+                                </div>
+                            </div>
+
+                            {topCompetitors.length === 0 ? (
+                                <p className="text-xs text-muted-foreground">
+                                    No competitors found for this area.
+                                </p>
+                            ) : (
+                                <ul className="divide-y divide-border rounded-md text-xs md:text-sm">
+                                    {topCompetitors.map((comp, idx) => (
+                                        <li
+                                            key={`${comp.name}-${idx}`}
+                                            className="flex items-center justify-between px-3 py-2.5"
+                                        >
+                                            <div className="flex flex-col">
+                                                <span className="font-medium">
+                                                    {comp.name}
+                                                </span>
+                                                <span className="mt-0.5 text-[11px] text-muted-foreground">
+                                                    {comp.price || "$"} ·{" "}
+                                                    {comp.reviews ?? 0} reviews
+                                                </span>
+                                            </div>
+                                            <div className="flex flex-col items-end text-[11px] text-muted-foreground">
+                                                {comp.rating != null && (
+                                                    <span className="flex items-center gap-0.5">
+                                                        {comp.rating.toFixed(1)}
+                                                        <span aria-hidden="true">
+                                                            ★
+                                                        </span>
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </section>
+
+                        {/* Market gaps – unified list style */}
+                        <section className="rounded-lg border border-border bg-card px-3 py-3.5 shadow-sm">
+                            <div className="mb-1.5 flex items-center gap-2">
+                                <span className="material-symbols-outlined text-[18px] text-primary">
+                                    lightbulb
+                                </span>
+                                <h2 className="text-sm font-semibold leading-tight">
+                                    Market gaps
+                                </h2>
+                            </div>
+
+                            {hasGaps ? (
+                                <ul className="divide-y divide-border rounded-md text-xs md:text-sm">
+                                    {gaps.slice(0, 5).map((gap, i) => (
+                                        <li key={i} className="px-3 py-2.5">
+                                            <p className="font-medium">
+                                                {gap.title || "Opportunity"}
+                                            </p>
+                                            {gap.description && (
+                                                <p className="mt-0.5 text-[11px] md:text-xs text-muted-foreground leading-snug">
+                                                    {gap.description}
+                                                </p>
+                                            )}
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p className="text-xs text-muted-foreground">
                                     No clear market gaps identified for this
                                     area.
                                 </p>
                             )}
-                            <ol className="space-y-3 text-text-secondary-light dark:text-text-secondary-dark list-decimal list-inside">
-                                {data.gaps.map((gap, i) => (
-                                    <li
-                                        key={i}
-                                        className="text-base leading-relaxed"
-                                    >
-                                        <span className="font-semibold text-text-primary-light dark:text-text-primary-dark">
-                                            {gap.title || "Opportunity"}
-                                        </span>
-                                        <div className="mt-1 text-text-secondary-light dark:text-text-secondary-dark">
-                                            {gap.description ||
-                                                "No description provided."}
-                                        </div>
-                                    </li>
-                                ))}
-                            </ol>
-                        </div>
-                    </section>
+                        </section>
 
-                    {/* Keys to success */}
-                    <section className="space-y-3">
-                        <div className="flex items-center gap-3">
-                            <TrendingUp className="h-6 w-6 text-primary flex-shrink-0" />
-                            <h2 className="text-xl font-bold text-text-primary-light dark:text-text-primary-dark">
-                                Keys to success
-                            </h2>
-                        </div>
-                        <div className="ml-9 space-y-2 bg-success/10 p-4 rounded-lg border-2 border-success/30">
-                            {data.success_factors.length === 0 && (
-                                <p className="text-sm text-text-secondary-light dark:text-text-secondary-dark">
+                        {/* Competitor review insights */}
+                        <section className="flex flex-col rounded-lg border border-border bg-card px-3 py-3.5 shadow-sm">
+                            <div className="mb-2 flex items-center gap-2">
+                                <span className="material-symbols-outlined text-[18px] text-primary">
+                                    reviews
+                                </span>
+                                <h2 className="text-sm font-semibold leading-tight">
+                                    Competitor review insights
+                                </h2>
+                            </div>
+
+                            <CompetitorReviewInsightsPanel
+                                business={business}
+                                area={area}
+                                location={location}
+                            />
+                        </section>
+
+                        {/* Row 3 */}
+                        {/* Top keys to success – unified list style */}
+                        <section className="rounded-lg border border-border bg-card px-3 py-3.5 shadow-sm">
+                            <div className="mb-1.5 flex items-center gap-2">
+                                <span className="material-symbols-outlined text-[18px] text-primary">
+                                    checklist
+                                </span>
+                                <h2 className="text-sm font-semibold leading-tight">
+                                    Top keys to success
+                                </h2>
+                            </div>
+
+                            {topSuccessFactors.length === 0 ? (
+                                <p className="text-xs text-muted-foreground">
                                     No specific success factors identified for
                                     this area.
                                 </p>
-                            )}
-                            <ul className="space-y-2 text-text-secondary-light dark:text-text-secondary-dark list-disc list-inside text-base">
-                                {data.success_factors.map((factor, i) => (
-                                    <li key={i} className="leading-relaxed">
-                                        <span className="font-semibold text-text-primary-light dark:text-text-primary-dark inline">
+                            ) : (
+                                <ul className="divide-y divide-border rounded-md text-xs md:text-sm">
+                                    {topSuccessFactors.map((factor, i) => (
+                                        <li
+                                            key={i}
+                                            className="px-3 py-2.5 leading-snug"
+                                        >
                                             {factor}
-                                        </span>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    </section>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </section>
+
+                        {/* Service offering insights */}
+                        <section className="lg:col-span-2 rounded-lg border border-border bg-card px-3 py-3.5 shadow-sm">
+                            <div className="mb-1.5 flex items-center gap-2">
+                                <span className="material-symbols-outlined text-[18px] text-primary">
+                                    grade
+                                </span>
+                                <h2 className="text-sm font-semibold leading-tight">
+                                    Service offering insights
+                                </h2>
+                            </div>
+                            <ServiceOfferingsInsightPanel
+                                business={business}
+                                area={area}
+                                location={location}
+                            />
+                        </section>
+                    </div>
                 </div>
             </main>
         </div>

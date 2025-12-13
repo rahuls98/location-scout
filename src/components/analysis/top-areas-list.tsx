@@ -1,15 +1,21 @@
 "use client";
 
-import { TopArea } from "@/lib/ai/types";
+import { TopArea } from "@/lib/domain/types";
 import { TopAreaCard } from "./top-area-card";
 
 interface TopAreasListProps {
     areas: TopArea[];
     business: string;
     location: string;
+    onZoomToArea: (lat: number, lng: number, zoomLevel: number) => void;
 }
 
-export function TopAreasList({ areas, business, location }: TopAreasListProps) {
+export function TopAreasList({
+    areas,
+    business,
+    location,
+    onZoomToArea,
+}: TopAreasListProps) {
     if (!areas?.length) return null;
 
     return (
@@ -25,6 +31,7 @@ export function TopAreasList({ areas, business, location }: TopAreasListProps) {
                         area={area}
                         business={business}
                         location={location}
+                        onZoomToArea={onZoomToArea}
                     />
                 ))}
             </div>

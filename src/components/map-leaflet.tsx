@@ -85,7 +85,7 @@ export default function MapLeaflet({
                 center={mapCenter}
                 zoom={13}
                 className="h-full w-full"
-                zoomControl
+                style={{ height: "100%", width: "100%" }}
             >
                 <TileLayer
                     attribution="&copy; OpenStreetMap contributors"
