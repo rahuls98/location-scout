@@ -25,6 +25,7 @@ export async function searchCompetitors(
         params: {
             term: business,
             location,
+            radius: 5000,
             limit: 50,
             sort_by: "best_match",
         },

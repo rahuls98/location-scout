@@ -32,7 +32,7 @@ export function HotspotsList({
     return (
         <div className="flex flex-col gap-4">
             <h2 className="flex items-center gap-2 text-lg font-semibold text-foreground">
-                Competitor hotspots ({hotspots.length})
+                Closest competitor hotspots ({hotspots.length})
             </h2>
             <div className="flex flex-col gap-2">
                 {hotspots.map((spot, i) => (
