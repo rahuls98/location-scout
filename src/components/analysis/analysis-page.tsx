@@ -146,7 +146,7 @@ export function AnalysisPage({
                     type="button"
                     onClick={handleSearchThisArea}
                     disabled={!mapInstance || isPending}
-                    className="absolute right-0 top-4 z-[1001] flex -translate-x-1/2 items-center gap-2 rounded-lg border border-border bg-card/95 px-4 py-2 text-sm font-semibold text-primary shadow-lg backdrop-blur-md transition-all duration-200 hover:border-primary hover:bg-primary hover:text-primary-foreground hover:shadow-2xl disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
+                    className="hidden md:flex absolute right-0 top-4 z-[1001] flex -translate-x-1/2 items-center gap-2 rounded-lg border border-border bg-card/95 px-4 py-2 text-sm font-semibold text-primary shadow-lg backdrop-blur-md transition-all duration-200 hover:border-primary hover:bg-primary hover:text-primary-foreground hover:shadow-2xl disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
                 >
                     <svg
                         className="h-4 w-4 flex-shrink-0"
