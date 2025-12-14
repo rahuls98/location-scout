@@ -1,7 +1,9 @@
 // src/components/detailed-analysis/detailed-analysis-page.tsx
+
 "use client";
 
 import "leaflet/dist/leaflet.css";
+import { useRouter } from "next/navigation";
 import { Header } from "../layout/header";
 import { MapContainerComponent } from "@/components/map-container";
 import CompetitorReviewInsightsPanel from "./competitor-review-insights-panel";
@@ -40,6 +42,7 @@ type DetailedAnalysisData = {
     gaps: Gap[];
     traffic?: Traffic;
     success_factors: string[];
+    service_insights?: string;
 };
 
 type Props = {
@@ -62,6 +65,7 @@ export default function DetailedAnalysisPage({
     const gaps = data.gaps ?? [];
     const traffic = data.traffic;
     const success_factors = data.success_factors ?? [];
+    const service_insights = data.service_insights;
 
     const topCompetitors = competitors.slice(0, 5);
     const topSuccessFactors = success_factors.slice(0, 3);
@@ -71,6 +75,7 @@ export default function DetailedAnalysisPage({
     const hasGaps = gaps.length > 0;
 
     const [mapInstance, setMapInstance] = useState<any>(null);
+    const router = useRouter();
 
     const centerMap = useCallback((map: any) => {
         map.setView([coords[0], coords[1]], 15);
@@ -90,7 +95,13 @@ export default function DetailedAnalysisPage({
                     {/* Header / Intro */}
                     <div className="pb-4 flex items-center justify-between">
                         <div>
-                            <h1 className="text-3xl font-black tracking-tight">
+                            <button
+                                onClick={() => router.back()}
+                                className="inline-flex items-center gap-2 rounded-lg border bg-primary px-4 py-2 text-xs text-primary-foreground font-semibold hover:bg-primary/90 transition-colors"
+                            >
+                                ← Back to analysis
+                            </button>
+                            <h1 className="text-3xl font-black tracking-tight mt-4">
                                 Detailed market analysis
                             </h1>
                             <p className="mt-2 text-sm text-muted-foreground">
@@ -115,7 +126,7 @@ export default function DetailedAnalysisPage({
                                     </h2>
                                 </div>
                             </div>
-                            <div className="h-60 w-full rounded-md border border-border">
+                            <div className="min-h-[15rem] h-full w-full rounded-md border border-border z-0">
                                 <MapContainerComponent
                                     onMapReady={setMapInstance}
                                     competitors={[]}
@@ -254,6 +265,16 @@ export default function DetailedAnalysisPage({
                                                         </span>
                                                     </span>
                                                 )}
+                                                {comp.url && (
+                                                    <a
+                                                        href={comp.url}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="mt-0.5 inline-flex h-5 items-center justify-center rounded-full bg-primary/10 px-1.5 text-[10px] font-medium text-primary hover:bg-primary/20"
+                                                    >
+                                                        View
+                                                    </a>
+                                                )}
                                             </div>
                                         </li>
                                     ))}
@@ -358,6 +379,7 @@ export default function DetailedAnalysisPage({
                                 business={business}
                                 area={area}
                                 location={location}
+                                initialInsights={service_insights}
                             />
                         </section>
                     </div>

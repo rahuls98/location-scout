@@ -1,4 +1,5 @@
 // lib/ai/yelp.ts
+
 import { getYelpV3Client, getYelpAIClient } from "@/lib/clients/yelp";
 import {
     TOP_AREAS_YELP_PROMPT,
@@ -15,6 +16,9 @@ import type {
     CustomerReviewInsightsResponse,
 } from "@/lib/domain/types";
 
+/**
+ * Yelp v3 business search used to build the base competitor set.
+ */
 export async function searchCompetitors(
     business: string,
     location: string
@@ -25,7 +29,6 @@ export async function searchCompetitors(
         params: {
             term: business,
             location,
-            radius: 5000,
             limit: 50,
             sort_by: "best_match",
         },
@@ -34,6 +37,10 @@ export async function searchCompetitors(
     return data.businesses || [];
 }
 
+/**
+ * Asks Yelp AI for top neighborhoods, then parses structured TopArea[]
+ * via NVIDIA/Nemotron.
+ */
 export async function fetchTopAreasFromYelpAI(input: {
     business: string;
     location: string;
@@ -48,9 +55,14 @@ export async function fetchTopAreasFromYelpAI(input: {
 
     const yelpText: string = data?.response?.text || "";
     const topAreas = await parseTopAreasWithLLM(yelpText);
+
     return { topAreas, yelpText };
 }
 
+/**
+ * Asks Yelp AI for a detailed area breakdown, parses it,
+ * and enriches with service-offering insights for the same area.
+ */
 export async function fetchDetailedAreaFromYelpAI(input: {
     business: string;
     location: string;
@@ -66,9 +78,29 @@ export async function fetchDetailedAreaFromYelpAI(input: {
 
     const yelpText: string = data?.response?.text || "";
     const parsed = await parseDetailedAreaWithLLM(yelpText, area);
-    return { data: parsed, yelpText };
+
+    let serviceInsights = "";
+    try {
+        serviceInsights = await fetchServiceOfferingInsightsFromYelpAI(
+            business,
+            area,
+            location
+        );
+    } catch (error) {
+        console.warn("Yelp AI service offering insights failed:", error);
+    }
+
+    const merged: DetailedAreaData = {
+        ...parsed,
+        service_insights: serviceInsights || parsed.service_insights,
+    };
+
+    return { data: merged, yelpText };
 }
 
+/**
+ * Summarizes competitor review themes around a specific query.
+ */
 export async function fetchCustomerReviewInsightsFromYelpAI(
     input: CustomerReviewInsightsInput
 ): Promise<CustomerReviewInsightsResponse> {
@@ -89,6 +121,7 @@ export async function fetchCustomerReviewInsightsFromYelpAI(
     if (!reviewInsights) {
         throw new Error("Yelp AI returned no insights");
     }
+
     return {
         query,
         business,
@@ -98,6 +131,9 @@ export async function fetchCustomerReviewInsightsFromYelpAI(
     };
 }
 
+/**
+ * Summarizes how well services meet expectations and value for money.
+ */
 export async function fetchServiceOfferingInsightsFromYelpAI(
     business: string,
     area: string,

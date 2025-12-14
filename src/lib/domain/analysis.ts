@@ -1,7 +1,9 @@
 // src/lib/domain/analysis.ts
+
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+
 import type {
     AnalysisInput,
     AnalysisResult,
@@ -12,50 +14,119 @@ import type {
 
 const ANALYSIS_CACHE_KEY = "analysis-cache";
 
-function getCache(): Record<string, AnalysisResult> {
-    if (typeof window === "undefined") return {};
+type AnalysisCache = Record<string, AnalysisResult>;
+
+/**
+ * Shared error message for generic failures.
+ */
+const FALLBACK_ERROR = "Something went wrong. Please try again.";
+
+/**
+ * Lazy in-memory snapshot of the session cache to avoid repeated JSON.parse.
+ */
+let memoryCache: AnalysisCache | null = null;
+
+function ensureCache(): AnalysisCache {
+    if (memoryCache) return memoryCache;
+    if (typeof window === "undefined") {
+        memoryCache = {};
+        return memoryCache;
+    }
+
     try {
-        const raw = sessionStorage.getItem(ANALYSIS_CACHE_KEY);
-        return raw ? JSON.parse(raw) : {};
+        const raw = window.sessionStorage.getItem(ANALYSIS_CACHE_KEY);
+        memoryCache = raw ? (JSON.parse(raw) as AnalysisCache) : {};
     } catch {
-        return {};
+        memoryCache = {};
+    }
+
+    return memoryCache!;
+}
+
+function persistCache() {
+    if (typeof window === "undefined" || !memoryCache) return;
+    try {
+        window.sessionStorage.setItem(
+            ANALYSIS_CACHE_KEY,
+            JSON.stringify(memoryCache)
+        );
+    } catch {
+        // ignore storage errors
     }
 }
 
-function setCacheEntry(id: string, result: AnalysisResult) {
-    if (typeof window === "undefined") return;
-    const cache = getCache();
+/**
+ * Writes a single analysis entry into the in-memory and session cache.
+ */
+function writeCacheEntry(id: string, result: AnalysisResult) {
+    const cache = ensureCache();
     cache[id] = result;
-    sessionStorage.setItem(ANALYSIS_CACHE_KEY, JSON.stringify(cache));
+    persistCache();
 }
 
-function getCacheEntry(id: string): AnalysisResult | null {
-    const cache = getCache();
+/**
+ * Reads a single analysis entry by id from the in-memory cache.
+ */
+function readCacheEntry(id: string): AnalysisResult | null {
+    const cache = ensureCache();
     return cache[id] || null;
 }
 
+/**
+ * Hook for the main analysis view.
+ */
 export function useAnalysis(id?: string) {
     const [result, setResult] = useState<AnalysisResult | null>(() => {
         if (!id) return null;
-        return getCacheEntry(id);
+        return readCacheEntry(id);
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    // Keep local state in sync when the analysis id changes.
+    useEffect(() => {
+        if (!id) {
+            setResult(null);
+            setLoading(false);
+            setError(null);
+            return;
+        }
+
+        const cached = readCacheEntry(id);
+        if (cached) {
+            setResult(cached);
+            setLoading(false);
+            setError(null);
+        } else {
+            setResult(null);
+        }
+    }, [id]);
+
     const analyze = useCallback(
         async (input: AnalysisInput) => {
+            if (!id) return;
+
+            const existing = readCacheEntry(id);
+            if (existing) {
+                setResult(existing);
+                setLoading(false);
+                setError(null);
+                return;
+            }
+
             setLoading(true);
             setError(null);
+
             try {
                 const analysis = await getAnalysisData(input);
                 setResult(analysis);
-                if (id) {
-                    setCacheEntry(id, analysis);
-                }
+                writeCacheEntry(id, analysis);
             } catch (err) {
                 const message =
-                    err instanceof Error ? err.message : "Analysis failed";
-                console.error("❌ Analysis failed:", message);
+                    err instanceof Error && err.message
+                        ? err.message
+                        : "Analysis failed to load.";
+                console.error("Analysis failed:", message);
                 setError(message);
                 setResult(null);
             } finally {
@@ -71,11 +142,14 @@ export function useAnalysis(id?: string) {
         loading,
         error,
         metrics: result?.metrics,
-        topAreas: result?.topAreas || [],
-        competitors: result?.competitors || [],
+        topAreas: result?.topAreas ?? [],
+        competitors: result?.competitors ?? [],
     };
 }
 
+/**
+ * Calls the main analysis API for a business and location.
+ */
 export async function getAnalysisData(
     input: AnalysisInput
 ): Promise<AnalysisResult> {
@@ -105,6 +179,9 @@ interface DetailedState {
     data: DetailedAreaData | null;
 }
 
+/**
+ * Hook for a single area's deeper dive panel.
+ */
 export function useDetailedAnalysis() {
     const [state, setState] = useState<DetailedState>({
         loading: false,
@@ -114,13 +191,16 @@ export function useDetailedAnalysis() {
 
     const loadDetailedArea = useCallback(async (input: DetailedInput) => {
         setState({ loading: true, error: null, data: null });
+
         try {
             const data = await getDetailedAnalysisData(input);
             setState({ loading: false, error: null, data });
         } catch (err) {
             const message =
-                err instanceof Error ? err.message : "Detailed analysis failed";
-            console.error("❌ Detailed analysis failed:", message);
+                err instanceof Error && err.message
+                    ? err.message
+                    : FALLBACK_ERROR;
+            console.error("Detailed analysis failed:", message);
             setState({ loading: false, error: message, data: null });
         }
     }, []);
@@ -133,6 +213,9 @@ export function useDetailedAnalysis() {
     };
 }
 
+/**
+ * Calls the API for a detailed area breakdown.
+ */
 export async function getDetailedAnalysisData(
     input: DetailedInput
 ): Promise<DetailedAreaData> {
@@ -150,6 +233,9 @@ export async function getDetailedAnalysisData(
     return data as DetailedAreaData;
 }
 
+/**
+ * Hook for summarizing customer reviews with Yelp AI.
+ */
 export function useCustomerReviewsInsight() {
     const [insights, setInsights] =
         useState<CustomerReviewInsightsResponse | null>(null);
@@ -175,16 +261,17 @@ export function useCustomerReviewsInsight() {
                 }
 
                 const result = await response.json();
+
                 if (result.success) {
-                    setInsights(result.data);
+                    setInsights(result.data as CustomerReviewInsightsResponse);
                 } else {
-                    throw new Error(result.error || "Unknown error");
+                    throw new Error(result.error || FALLBACK_ERROR);
                 }
             } catch (err: any) {
                 const message =
-                    err instanceof Error
+                    err instanceof Error && err.message
                         ? err.message
-                        : "Reviews insight failed";
+                        : "Reviews insight failed to load.";
                 console.error("Customer reviews insight failed:", message);
                 setError(message);
                 setInsights(null);
@@ -203,6 +290,9 @@ export function useCustomerReviewsInsight() {
     };
 }
 
+/**
+ * Hook for generating service offering recommendations per area.
+ */
 export function useServiceOfferingInsights() {
     const [insights, setInsights] = useState<string>("");
     const [loading, setLoading] = useState(false);
@@ -227,16 +317,17 @@ export function useServiceOfferingInsights() {
                 }
 
                 const result = await response.json();
+
                 if (result.success) {
-                    setInsights(result.data);
+                    setInsights(result.data as string);
                 } else {
-                    throw new Error(result.error || "Unknown error");
+                    throw new Error(result.error || FALLBACK_ERROR);
                 }
             } catch (err: any) {
                 const message =
-                    err instanceof Error
+                    err instanceof Error && err.message
                         ? err.message
-                        : "Service insights failed";
+                        : "Service insights failed to load.";
                 console.error("Service offering insights failed:", message);
                 setError(message);
                 setInsights("");

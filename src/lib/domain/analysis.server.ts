@@ -1,4 +1,5 @@
 // src/lib/domain/analysis.server.ts
+
 import type {
     AnalysisInput,
     AnalysisResult,
@@ -6,28 +7,32 @@ import type {
     CustomerReviewInsightsResponse,
     TopArea,
 } from "./types";
+
 import {
     searchCompetitors,
     fetchTopAreasFromYelpAI,
     fetchCustomerReviewInsightsFromYelpAI,
     fetchServiceOfferingInsightsFromYelpAI,
 } from "@/lib/ai/yelp";
+
 import { calculateSummaryMetrics } from "./analysis.utils";
 
+/**
+ * Core server-side pipeline for a business/location analysis.
+ */
 export async function analyzeBusinessOpportunityServer(
     input: AnalysisInput
 ): Promise<AnalysisResult> {
     const { business, location } = input;
+
     const competitors = await searchCompetitors(business, location);
     const metrics = calculateSummaryMetrics(competitors);
 
     let topAreas: TopArea[] = [];
+
     try {
-        const { topAreas: areas } = await fetchTopAreasFromYelpAI({
-            business,
-            location,
-        });
-        topAreas = areas;
+        const response = await fetchTopAreasFromYelpAI({ business, location });
+        topAreas = response.topAreas;
     } catch (error) {
         console.warn("AI top areas failed:", error);
     }
@@ -35,20 +40,22 @@ export async function analyzeBusinessOpportunityServer(
     return { metrics, topAreas, competitors };
 }
 
+/**
+ * Gets structured insights from customer reviews via Yelp AI.
+ */
 export async function getCustomerReviewInsights(
     input: CustomerReviewInsightsInput
 ): Promise<CustomerReviewInsightsResponse> {
-    return await fetchCustomerReviewInsightsFromYelpAI(input);
+    return fetchCustomerReviewInsightsFromYelpAI(input);
 }
 
+/**
+ * Gets a narrative of service offering opportunities for a given area.
+ */
 export async function getServiceOfferingInsights(
     business: string,
     area: string,
     location: string
 ): Promise<string> {
-    return await fetchServiceOfferingInsightsFromYelpAI(
-        business,
-        area,
-        location
-    );
+    return fetchServiceOfferingInsightsFromYelpAI(business, area, location);
 }

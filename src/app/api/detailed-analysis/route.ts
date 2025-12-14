@@ -1,7 +1,11 @@
 // src/app/api/detailed-analysis/route.ts
+
 import { NextRequest, NextResponse } from "next/server";
 import { fetchDetailedAreaFromYelpAI } from "@/lib/ai/yelp";
 
+/**
+ * Detailed analysis for a specific area within a location.
+ */
 export async function POST(request: NextRequest) {
     try {
         const { business, location, area } = (await request.json()) as {
@@ -31,6 +35,7 @@ export async function POST(request: NextRequest) {
         const message =
             error instanceof Error ? error.message : "Detailed analysis failed";
         console.error("❌ /api/detailed-analysis error:", message);
+
         return NextResponse.json(
             { success: false, error: message },
             { status: 500 }

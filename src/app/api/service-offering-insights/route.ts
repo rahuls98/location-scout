@@ -1,7 +1,11 @@
-// app/api/service-offerings-insight/route.ts - NEW ROUTE
+// app/api/service-offering-insights/route.ts
+
 import { NextRequest, NextResponse } from "next/server";
 import { getServiceOfferingInsights } from "@/lib/domain/analysis.server";
 
+/**
+ * Summarizes service offering opportunities for a business in an area.
+ */
 export async function POST(request: NextRequest) {
     try {
         const { business, area, location } = await request.json();
@@ -27,7 +31,8 @@ export async function POST(request: NextRequest) {
             error instanceof Error
                 ? error.message
                 : "Service offering insights failed";
-        console.error("api/service-offering-insights error:", message);
+        console.error("api/service-offerings-insight error:", message);
+
         return NextResponse.json(
             { success: false, error: message },
             { status: 500 }

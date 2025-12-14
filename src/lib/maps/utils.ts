@@ -1,4 +1,5 @@
-// src/lib/maps/utils.ts - Leaflet map + geolocation utilities
+// src/lib/maps/utils.ts
+
 import { LatLngBounds, LatLng } from "leaflet";
 
 export interface ViewportInfo {
@@ -7,7 +8,7 @@ export interface ViewportInfo {
 }
 
 /**
- * Extract viewport bounds + center from Leaflet map instance
+ * Extracts viewport bounds and center from a Leaflet map instance.
  */
 export function getViewportInfo(map: any): ViewportInfo {
     const bounds = map.getBounds() as LatLngBounds;
@@ -30,8 +31,10 @@ export function getViewportInfo(map: any): ViewportInfo {
 }
 
 /**
- * Reverse geocode coordinates → human-readable area name
- * Format: "Neighborhood, City, State" or "City, State"
+ * Reverse geocodes coordinates into a human-readable area label.
+ * Preferred formats:
+ * - "Neighborhood, City, State"
+ * - "City, State"
  */
 export async function getAreaTitleFromCenter(
     lat: number,
@@ -54,7 +57,6 @@ export async function getAreaTitleFromCenter(
         const data = await res.json();
         const addr = data.address || {};
 
-        // Priority: neighborhood/suburb → city_district/borough → city/town
         const area =
             addr.neighbourhood ||
             addr.suburb ||
@@ -67,15 +69,13 @@ export async function getAreaTitleFromCenter(
         const city = addr.city || addr.town || addr.village || addr.county;
         const state = addr.state || addr.state_district;
 
-        // Always include City + State
         if (city && state) {
             return area && area !== city
                 ? `${area}, ${city}, ${state}`
                 : `${city}, ${state}`;
         }
 
-        // Fallback to unknown
-        return "";
+        return "This area";
     } catch (error) {
         console.warn("Geocoding error:", error);
         return "This area";

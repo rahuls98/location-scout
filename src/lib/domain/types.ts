@@ -34,6 +34,7 @@ export interface DetailedAreaData {
         peak_hours: string;
     };
     success_factors: string[];
+    service_insights?: string;
 }
 
 export interface TopArea {

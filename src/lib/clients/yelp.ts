@@ -1,12 +1,18 @@
 // lib/clients/yelp.ts
-import axios from "axios";
+
+import axios, { AxiosInstance } from "axios";
 
 const YELP_V3_BASE = "https://api.yelp.com/v3";
 const YELP_AI_BASE = "https://api.yelp.com";
 
-export async function getYelpV3Client() {
+/**
+ * Axios client for Yelp v3 REST endpoints.
+ */
+export async function getYelpV3Client(): Promise<AxiosInstance> {
     const apiKey = process.env.YELP_API_KEY;
-    if (!apiKey) throw new Error("YELP_API_KEY missing from server env");
+    if (!apiKey) {
+        throw new Error("YELP_API_KEY missing from server env");
+    }
 
     return axios.create({
         baseURL: YELP_V3_BASE,
@@ -17,9 +23,14 @@ export async function getYelpV3Client() {
     });
 }
 
-export async function getYelpAIClient() {
+/**
+ * Axios client for Yelp AI endpoints.
+ */
+export async function getYelpAIClient(): Promise<AxiosInstance> {
     const apiKey = process.env.YELP_API_KEY;
-    if (!apiKey) throw new Error("YELP_API_KEY missing from server env");
+    if (!apiKey) {
+        throw new Error("YELP_API_KEY missing from server env");
+    }
 
     return axios.create({
         baseURL: YELP_AI_BASE,

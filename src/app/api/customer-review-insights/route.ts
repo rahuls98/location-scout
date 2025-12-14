@@ -1,7 +1,11 @@
 // app/api/customer-review-insights/route.ts
+
 import { NextRequest, NextResponse } from "next/server";
 import { getCustomerReviewInsights } from "@/lib/domain/analysis.server";
 
+/**
+ * Summarizes customer review themes for a query in a given area.
+ */
 export async function POST(request: NextRequest) {
     try {
         const { query, business, location, area } = await request.json();
@@ -32,7 +36,8 @@ export async function POST(request: NextRequest) {
             error instanceof Error
                 ? error.message
                 : "Customer reviews insight failed";
-        console.error("api/customer-reviews-insight error:", message);
+        console.error("api/customer-review-insights error:", message);
+
         return NextResponse.json(
             { success: false, error: message },
             { status: 500 }
