@@ -19,7 +19,7 @@ import type {
 /**
  * Yelp v3 business search used to build the base competitor set.
  */
-export async function searchCompetitors(
+export async function fetchCompetitorsFromYelp(
     business: string,
     location: string
 ): Promise<YelpBusiness[]> {

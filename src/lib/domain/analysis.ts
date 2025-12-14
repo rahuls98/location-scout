@@ -13,8 +13,10 @@ import type {
 } from "./types";
 
 const ANALYSIS_CACHE_KEY = "analysis-cache";
+const DETAILED_CACHE_KEY = "detailed-analysis-cache";
 
 type AnalysisCache = Record<string, AnalysisResult>;
+type DetailedCache = Record<string, DetailedAreaData>;
 
 /**
  * Shared error message for generic failures.
@@ -24,31 +26,61 @@ const FALLBACK_ERROR = "Something went wrong. Please try again.";
 /**
  * Lazy in-memory snapshot of the session cache to avoid repeated JSON.parse.
  */
-let memoryCache: AnalysisCache | null = null;
+let memoryAnalysisCache: AnalysisCache | null = null;
+let memoryDetailedCache: DetailedCache | null = null;
 
-function ensureCache(): AnalysisCache {
-    if (memoryCache) return memoryCache;
+function ensureAnalysisCache(): AnalysisCache {
+    if (memoryAnalysisCache) return memoryAnalysisCache;
     if (typeof window === "undefined") {
-        memoryCache = {};
-        return memoryCache;
+        memoryAnalysisCache = {};
+        return memoryAnalysisCache;
     }
 
     try {
         const raw = window.sessionStorage.getItem(ANALYSIS_CACHE_KEY);
-        memoryCache = raw ? (JSON.parse(raw) as AnalysisCache) : {};
+        memoryAnalysisCache = raw ? (JSON.parse(raw) as AnalysisCache) : {};
     } catch {
-        memoryCache = {};
+        memoryAnalysisCache = {};
     }
 
-    return memoryCache!;
+    return memoryAnalysisCache!;
 }
 
-function persistCache() {
-    if (typeof window === "undefined" || !memoryCache) return;
+function ensureDetailedCache(): DetailedCache {
+    if (memoryDetailedCache) return memoryDetailedCache;
+    if (typeof window === "undefined") {
+        memoryDetailedCache = {};
+        return memoryDetailedCache;
+    }
+
+    try {
+        const raw = window.sessionStorage.getItem(DETAILED_CACHE_KEY);
+        memoryDetailedCache = raw ? (JSON.parse(raw) as DetailedCache) : {};
+    } catch {
+        memoryDetailedCache = {};
+    }
+
+    return memoryDetailedCache!;
+}
+
+function persistAnalysisCache() {
+    if (typeof window === "undefined" || !memoryAnalysisCache) return;
     try {
         window.sessionStorage.setItem(
             ANALYSIS_CACHE_KEY,
-            JSON.stringify(memoryCache)
+            JSON.stringify(memoryAnalysisCache)
+        );
+    } catch {
+        // ignore storage errors
+    }
+}
+
+function persistDetailedCache() {
+    if (typeof window === "undefined" || !memoryDetailedCache) return;
+    try {
+        window.sessionStorage.setItem(
+            DETAILED_CACHE_KEY,
+            JSON.stringify(memoryDetailedCache)
         );
     } catch {
         // ignore storage errors
@@ -58,17 +90,34 @@ function persistCache() {
 /**
  * Writes a single analysis entry into the in-memory and session cache.
  */
-function writeCacheEntry(id: string, result: AnalysisResult) {
-    const cache = ensureCache();
+function writeAnalysisCacheEntry(id: string, result: AnalysisResult) {
+    const cache = ensureAnalysisCache();
     cache[id] = result;
-    persistCache();
+    persistAnalysisCache();
+}
+
+/**
+ * Writes a single detailed analysis entry into the in-memory and session cache.
+ */
+function writeDetailedCacheEntry(id: string, result: DetailedAreaData) {
+    const cache = ensureDetailedCache();
+    cache[id] = result;
+    persistDetailedCache();
 }
 
 /**
  * Reads a single analysis entry by id from the in-memory cache.
  */
-function readCacheEntry(id: string): AnalysisResult | null {
-    const cache = ensureCache();
+function readAnalysisCacheEntry(id: string): AnalysisResult | null {
+    const cache = ensureAnalysisCache();
+    return cache[id] || null;
+}
+
+/**
+ * Reads a single detailed analysis entry by id from the in-memory cache.
+ */
+function readDetailedCacheEntry(id: string): DetailedAreaData | null {
+    const cache = ensureDetailedCache();
     return cache[id] || null;
 }
 
@@ -78,7 +127,7 @@ function readCacheEntry(id: string): AnalysisResult | null {
 export function useAnalysis(id?: string) {
     const [result, setResult] = useState<AnalysisResult | null>(() => {
         if (!id) return null;
-        return readCacheEntry(id);
+        return readAnalysisCacheEntry(id);
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -92,7 +141,7 @@ export function useAnalysis(id?: string) {
             return;
         }
 
-        const cached = readCacheEntry(id);
+        const cached = readAnalysisCacheEntry(id);
         if (cached) {
             setResult(cached);
             setLoading(false);
@@ -106,7 +155,7 @@ export function useAnalysis(id?: string) {
         async (input: AnalysisInput) => {
             if (!id) return;
 
-            const existing = readCacheEntry(id);
+            const existing = readAnalysisCacheEntry(id);
             if (existing) {
                 setResult(existing);
                 setLoading(false);
@@ -120,7 +169,7 @@ export function useAnalysis(id?: string) {
             try {
                 const analysis = await getAnalysisData(input);
                 setResult(analysis);
-                writeCacheEntry(id, analysis);
+                writeAnalysisCacheEntry(id, analysis);
             } catch (err) {
                 const message =
                     err instanceof Error && err.message
@@ -182,28 +231,62 @@ interface DetailedState {
 /**
  * Hook for a single area's deeper dive panel.
  */
-export function useDetailedAnalysis() {
-    const [state, setState] = useState<DetailedState>({
-        loading: false,
-        error: null,
-        data: null,
+export function useDetailedAnalysis(id?: string) {
+    const [state, setState] = useState<DetailedState>(() => {
+        if (!id) return { loading: false, error: null, data: null };
+        const cached = readDetailedCacheEntry(id);
+        return {
+            loading: false,
+            error: null,
+            data: cached || null,
+        };
     });
 
-    const loadDetailedArea = useCallback(async (input: DetailedInput) => {
-        setState({ loading: true, error: null, data: null });
-
-        try {
-            const data = await getDetailedAnalysisData(input);
-            setState({ loading: false, error: null, data });
-        } catch (err) {
-            const message =
-                err instanceof Error && err.message
-                    ? err.message
-                    : FALLBACK_ERROR;
-            console.error("Detailed analysis failed:", message);
-            setState({ loading: false, error: message, data: null });
+    // Keep local state in sync when the detailed analysis id changes.
+    useEffect(() => {
+        if (!id) {
+            setState({ loading: false, error: null, data: null });
+            return;
         }
-    }, []);
+
+        const cached = readDetailedCacheEntry(id);
+        if (cached) {
+            setState({ loading: false, error: null, data: cached });
+        } else {
+            setState({ loading: false, error: null, data: null });
+        }
+    }, [id]);
+
+    const loadDetailedArea = useCallback(
+        async (input: DetailedInput) => {
+            // Use provided id or generate consistent cache ID
+            const cacheId =
+                id || `${input.business}|${input.location}|${input.area}`;
+
+            // Always check cache first using the final cacheId
+            const cached = readDetailedCacheEntry(cacheId);
+            if (cached) {
+                setState({ loading: false, error: null, data: cached });
+                return;
+            }
+
+            setState({ loading: true, error: null, data: null });
+
+            try {
+                const data = await getDetailedAnalysisData(input);
+                setState({ loading: false, error: null, data });
+                writeDetailedCacheEntry(cacheId, data);
+            } catch (err) {
+                const message =
+                    err instanceof Error && err.message
+                        ? err.message
+                        : FALLBACK_ERROR;
+                console.error("Detailed analysis failed:", message);
+                setState({ loading: false, error: message, data: null });
+            }
+        },
+        [id]
+    ); // id is now a dependency
 
     return {
         loading: state.loading,

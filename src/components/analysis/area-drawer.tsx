@@ -1,6 +1,6 @@
 "use client";
 
-import { Icon } from "@/components/icon";
+import { useRouter } from "next/navigation";
 import { SummaryCard } from "./summary-card";
 import { HotspotsList } from "./hotspots-list";
 import { TopAreasList } from "./top-areas-list";
@@ -36,6 +36,7 @@ export function AreaDrawer({
     onZoomToArea,
     analysisLoading,
 }: AreaDrawerProps) {
+    const router = useRouter();
     const isClient = typeof window !== "undefined";
 
     return (
@@ -44,12 +45,12 @@ export function AreaDrawer({
                 <aside className="flex h-full w-full max-w-[500px] flex-shrink-0 flex-col border-r border-border bg-card shadow-xl">
                     <div className="flex h-full flex-col overflow-hidden">
                         <div className="sticky top-0 z-10 flex-shrink-0 border-b border-border bg-card/95 p-6 shadow-sm backdrop-blur">
-                            <a
-                                href="/"
+                            <button
+                                onClick={() => router.back()}
                                 className="inline-flex items-center gap-2 rounded-lg border bg-primary px-4 py-2 text-xs text-primary-foreground font-semibold hover:bg-primary/90 transition-colors"
                             >
                                 ← Change search
-                            </a>
+                            </button>
                             <div>
                                 <br />
                                 <h1 className="text-base font-semibold leading-tight text-foreground md:text-lg">

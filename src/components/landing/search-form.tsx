@@ -268,8 +268,7 @@ export function SearchForm() {
                     </Button>
 
                     <p className="text-center text-xs text-muted-foreground md:text-sm">
-                        Uses Yelp business and review data in real time. Nothing
-                        you enter here is saved.
+                        Uses Yelp business and review data in real time.
                     </p>
                 </form>
             </Card>

@@ -1,28 +1,34 @@
-// Prompts for Yelp AI + NVIDIA LLM parsing.
+// lib/ai/prompts.ts
+
+/** Yelp AI prompts **/
 
 export const TOP_AREAS_YELP_PROMPT = (
     business: string,
     location: string
 ): string =>
     `
-You are a local market analyst.
-List the top 3 neighborhoods/areas in and around ${location} for opening a ${business}. For each area, you MUST provide:
+You are a local market analyst using Yelp data.
+
+Score rubric (X.X/10): 
+- Saturation 30% (fewer competitors = higher score) 
+- Gaps 25% (actionable opportunities from reviews)
+- Demographics 25% (target customer fit)
+- Traffic 20% (higher traffic = higher score)
+
+List the top 3 neighborhoods in ${location} for opening a ${business}. For each:
 1. Name
-2. Saturation: Low(≤3), Medium(4-12), High(>12) competitors
-3. Market gaps: Exactly 2 specific gaps inferred from negative reviews or obvious missing offerings
+2. Saturation: Low(≤3), Medium(4-12), High(>12) competitors  
+3. Market gaps: Exactly 2 specific gaps from negative reviews/missing offerings
 4. Approximate rent range: "$Xk-Yk/mo"
-5. Approximate foot traffic: Very High / High / Medium / Low
-6. Overall score: X.X/10
-7. Latitude,Longitude
+5. Approximate foot traffic: Very High/High/Medium/Low
+6. Score: X.X/10 (use rubric)
+7. Lat,Lng
 
-Format EACH line exactly like this, with no extra text before or after:
-[NAME] - [X.X/10] - [Low/Medium/High] ([#] comp) - Gap1, Gap2 - $[Xk-Yk]/mo - [Traffic] - [Latitude,Longitude]
+Format EXACTLY (no extra text):
+[NAME] - [X.X/10] - [Low/Medium/High] ([#] comp) - Gap1, Gap2 - $[Xk-Yk]/mo - [Traffic] - [Lat,Lng]
 
-Rules:
-- Output ONLY the 3 formatted lines, nothing else.
-- Do NOT include bullet points, headings, explanations, or commentary.
-- If data is missing, infer reasonable estimates instead of asking the user for more information.
-- If location is unclear, use the city center to search.
+Rules: ONLY 3 lines, no explanations. No bullets/headings/comments/follow-ups. 
+Infer reasonable estimates for missing data. Use city center if location is unclear.
 `.trim();
 
 export const DETAILED_ANALYSIS_YELP_PROMPT = ({
@@ -37,106 +43,13 @@ export const DETAILED_ANALYSIS_YELP_PROMPT = ({
     `
 Detailed analysis for ${business} in ${location}'s ${area} neighborhood:
 
-1. Top 5 competitors: name, rating (X.X), reviews, price
+1. Top 5 competitors: name, rating (X.X), reviews, price, yelp link url
 2. Demographics: age range, income level, lifestyle traits, peak hours
 3. Market gaps: 3-5 specific opportunities from negative reviews
 4. Foot traffic: weekday patterns, weekend patterns, peak hours
 5. Success factors: 3-5 reasons winners succeed here
 
 Use clear bullet points for each section.
-`.trim();
-
-export const PARSE_TOP_AREAS_PROMPT = (yelpResponse: string): string =>
-    `
-You are a JSON generator. Convert the following Yelp AI output into a single JSON object.
-
-The input SHOULD be 3 lines in this exact format:
-[NAME] - [X.X/10] - [Low/Medium/High] ([#] comp) - Gap1, Gap2 - $[Xk-Yk]/mo - [Traffic] - [Latitude,Longitude]
-
-If you see any extra commentary, reasoning, or text that does not match this pattern, IGNORE it and only use the lines that match the pattern.
-
-You MUST output JSON in this exact shape:
-{
-  "topAreas": [
-    {
-      "name": string,
-      "score": number,
-      "saturation": "Low" | "Medium" | "High",
-      "competitors": number,
-      "gaps": [string, string],
-      "rent": string,
-      "traffic": "Very High" | "High" | "Medium" | "Low",
-      "latitude": number,
-      "longitude": number
-    }
-  ]
-}
-
-Rules:
-- Do NOT ask the user for more information.
-- If any values (rent, traffic, score, competitors) are missing or ambiguous, make a single best guess based on the text and still fill all fields.
-- "gaps" must be exactly 2 grammatically correct readable phrases per area. Each gap analyzes a specific market opportunity identified from negative competitor reviews or missing offerings. Make clear these are inferred from customer complaints about competitors. Keep concise (1 line each), non-repetitive.
-- Return ONLY the JSON object above. No markdown, no explanation, no extra keys.
-
-Now convert this Yelp AI response:
-
-${yelpResponse}
-`.trim();
-
-export const PARSE_DETAILED_AREA_PROMPT = (yelpResponse: string): string =>
-    `
-You are a JSON generator. Always respond with a single valid JSON object that matches the exact schema below.
-If the analysis uses different headings or wording, map them into the closest fields in this schema.
-
-Target JSON schema:
-{
-  "name": string,
-  "competitors": [
-    {
-      "name": string,
-      "rating": number,
-      "reviews": number,
-      "price": string,
-      "url": string | null,
-      "price_per_sqft": number | null
-    }
-  ],
-  "demographics": [
-    {
-      "type": string,
-      "value": string
-    }
-  ],
-  "gaps": [
-    {
-      "title": string,
-      "description": string
-    }
-  ],
-  "traffic": {
-    "weekday": string,
-    "weekend": string,
-    "peak_hours": string
-  },
-  "success_factors": string[]
-}
-
-Mapping rules:
-- Customer segments, age, income, or lifestyle descriptions → "demographics".
-- Problems, complaints, or missing offerings → "gaps" (title + 1-2 sentence description).
-- Weekday vs weekend flow, busiest times, arrival patterns → "traffic".
-- Reasons existing businesses do well → "success_factors" (short phrases).
-- Each competitor: name, numeric rating, numeric review count, price string (or empty), url and price_per_sqft as null if unknown.
-- If some details are missing, infer a single reasonable value rather than omitting fields.
-
-Output rules:
-- Return ONLY one JSON object in the schema above.
-- If analysis contains invalid responses like "unknown" or "insufficient", ignore entry in the output.
-- Do not include explanations, markdown, or any extra keys.
-
-Yelp AI analysis to convert:
-
-${yelpResponse}
 `.trim();
 
 export const CUSTOMER_REVIEW_INSIGHTS_YELP_PROMPT = ({
@@ -175,5 +88,101 @@ Look at recent reviews and produce one cohesive, plain-English paragraph that co
 2) themes where customers feel they did not get their money's worth (rushed work, inconsistent quality, pricing vs outcome).
 
 Do not mention specific business names or locations.
-Also briefly suggest 2–3 concrete service or experience improvements that could address both types of concerns.
+Also briefly suggest 2-3 concrete service or experience improvements that could address both types of concerns.
+`.trim();
+
+/** ------------------------------------ **/
+/** LLM parser prompts **/
+/** ------------------------------------ **/
+
+export const PARSE_TOP_AREAS_PROMPT = (yelpResponse: string): string =>
+    `
+You are a JSON generator. Convert the following Yelp AI output into a single JSON object.
+
+The input SHOULD be 3 lines in this exact format:
+[NAME] - [X.X/10] - [Low/Medium/High] ([#] comp) - Gap1, Gap2 - $[Xk-Yk]/mo - [Traffic] - [Latitude,Longitude]
+
+If you see any extra commentary, reasoning, or text that does not match this pattern, IGNORE it and only use the lines that match the pattern.
+
+You MUST output JSON in this exact shape:
+{
+  "topAreas": [
+    {
+		"name": string,
+		"score": number,
+		"saturation": "Low" | "Medium" | "High",
+		"competitors": number,
+		"gaps": [string, string],
+		"rent": string,
+		"traffic": "Very High" | "High" | "Medium" | "Low",
+		"latitude": number,
+		"longitude": number
+    }
+  ]
+}
+
+Rules:
+- Do NOT ask the user for more information.
+- If any values (rent, traffic, score, competitors) are missing or ambiguous, make a single best guess based on the text and still fill all fields.
+- "gaps" must be exactly 2 grammatically correct readable phrases per area. Each gap analyzes a specific market opportunity identified from negative competitor reviews or missing offerings. Make clear these are inferred from customer complaints about competitors. Keep concise (1 line each), non-repetitive.
+- Return ONLY the JSON object above. No markdown, no explanation, no extra keys.
+
+Now convert this Yelp AI response:
+
+${yelpResponse}
+`.trim();
+
+export const PARSE_DETAILED_AREA_PROMPT = (yelpResponse: string): string =>
+    `
+You are a JSON generator. Always respond with a single valid JSON object that matches the exact schema below.
+If the analysis uses different headings or wording, map them into the closest fields in this schema.
+
+Target JSON schema:
+{
+	"name": string,
+	"competitors": [
+		{
+			"name": string,
+			"rating": number,
+			"reviews": number,
+			"price": string,
+			"url": string | null,
+		}
+	],
+	"demographics": [
+		{
+			"type": string,
+			"value": string
+		}
+	],
+	"gaps": [
+		{
+			"title": string,
+			"description": string
+		}
+	],
+	"traffic": {
+		"weekday": string,
+		"weekend": string,
+		"peak_hours": string
+	},
+	"success_factors": string[]
+}
+
+Mapping rules:
+- Customer segments, age, income, or lifestyle descriptions → "demographics".
+- Problems, complaints, or missing offerings → "gaps" (title + 1-2 sentence description).
+- Weekday vs weekend flow, busiest times, arrival patterns → "traffic".
+- Reasons existing businesses do well → "success_factors" (short phrases).
+- Each competitor: name, numeric rating, numeric review count, price string (or empty), url and price_per_sqft as null if unknown.
+- If some details are missing, infer a single reasonable value rather than omitting fields.
+
+Output rules:
+- Return ONLY one JSON object in the schema above.
+- If analysis contains invalid responses like "unknown" or "insufficient", ignore entry in the output.
+- Do not include explanations, markdown, or any extra keys.
+
+Yelp AI analysis to convert:
+
+${yelpResponse}
 `.trim();

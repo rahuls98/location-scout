@@ -9,7 +9,7 @@ import type {
 } from "./types";
 
 import {
-    searchCompetitors,
+    fetchCompetitorsFromYelp,
     fetchTopAreasFromYelpAI,
     fetchCustomerReviewInsightsFromYelpAI,
     fetchServiceOfferingInsightsFromYelpAI,
@@ -25,7 +25,7 @@ export async function analyzeBusinessOpportunityServer(
 ): Promise<AnalysisResult> {
     const { business, location } = input;
 
-    const competitors = await searchCompetitors(business, location);
+    const competitors = await fetchCompetitorsFromYelp(business, location);
     const metrics = calculateSummaryMetrics(competitors);
 
     let topAreas: TopArea[] = [];

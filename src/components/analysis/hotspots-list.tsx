@@ -71,7 +71,7 @@ function HotspotRow({
                     {rating.toFixed(1)} ★ average
                 </p>
             </div>
-            <span className="whitespace-nowrap text-sm font-medium text-primary transition-all group-hover:underline">
+            <span className="whitespace-nowrap text-sm font-medium text-primary transition-all group-hover:underline hidden md:inline">
                 Zoom to area
             </span>
         </button>

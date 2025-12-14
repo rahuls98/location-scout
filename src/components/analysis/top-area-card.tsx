@@ -60,17 +60,17 @@ export function TopAreaCard({
                 </div>
             </div>
 
-            <div className="flex gap-2 text-sm font-medium text-muted-foreground">
+            <div className="flex gap-2 text-sm font-medium text-muted-foreground md:flex">
                 <Link
                     href=""
-                    className="transition-colors hover:text-primary hover:underline"
+                    className="transition-colors hover:text-primary hover:underline hidden md:inline"
                     onClick={() =>
                         onZoomToArea?.(area.latitude, area.longitude, 18)
                     }
                 >
                     Zoom to area
                 </Link>
-                •
+                <span className="hidden md:inline">•</span>
                 <Link
                     href={`/detailed-analysis/${encodeURIComponent(
                         business

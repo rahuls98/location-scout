@@ -9,7 +9,7 @@ interface Props {
 
 export default function AnalysisRoute({ searchParams }: Props) {
     return (
-        <Suspense fallback={<div>Loading...</div>}>
+        <Suspense fallback={<div></div>}>
             <SearchParamsClient searchParams={searchParams} />
         </Suspense>
     );
