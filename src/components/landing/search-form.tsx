@@ -31,8 +31,8 @@ interface LocationOption {
     city: string;
 }
 
-const LOCATION_JSON_URL =
-    "https://gist.githubusercontent.com/ahmu83/38865147cf3727d221941a2ef8c22a77/raw/c647f74643c0b3f8407c28ddbb599e9f594365ca/US_States_and_Cities.json";
+const US_CITIES_URL =
+    "https://raw.githubusercontent.com/cschoi3/US-states-and-cities-json/refs/heads/master/data.json";
 
 export function SearchForm() {
     const router = useRouter();
@@ -54,25 +54,41 @@ export function SearchForm() {
                 setLoadingLocations(true);
                 setLoadError(null);
 
-                const res = await fetch(LOCATION_JSON_URL);
-                if (!res.ok) {
-                    throw new Error(`Failed to load locations: ${res.status}`);
-                }
+                let json: Record<string, string[]>;
 
-                const json = (await res.json()) as StatesCitiesJson;
+                try {
+                    const res = await fetch("/data/us-cities.json");
+                    if (!res.ok) throw new Error(`Local failed: ${res.status}`);
+                    json = await res.json();
+                } catch (localErr) {
+                    console.warn(
+                        "Local JSON failed, falling back to CDN:",
+                        localErr
+                    );
+
+                    const res = await fetch(US_CITIES_URL);
+                    if (!res.ok) throw new Error(`CDN failed: ${res.status}`);
+                    json = await res.json();
+                }
 
                 const options: LocationOption[] = [];
-                for (const [state, cities] of Object.entries(json)) {
-                    cities.forEach((city) => {
+
+                Object.entries(json).forEach(([state, cities]) => {
+                    cities.forEach((cityUpper) => {
+                        const city = cityUpper
+                            .toLowerCase()
+                            .replace(/\b\w/g, (l) => l.toUpperCase())
+                            .replace(/([A-Z][a-z]+)([A-Z][a-z]+)/g, "$1 $2");
+
                         const full = `${city}, ${state}`;
                         options.push({
-                            value: full,
+                            value: `${cityUpper}, ${state}`,
                             label: full,
                             state,
-                            city,
+                            city: cityUpper,
                         });
                     });
-                }
+                });
 
                 setLocations(options);
             } catch (err) {
