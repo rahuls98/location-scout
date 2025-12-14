@@ -22,8 +22,6 @@ import {
     CommandGroup,
 } from "@/components/ui/command";
 
-type StatesCitiesJson = Record<string, string[]>;
-
 interface LocationOption {
     value: string; // "City, State"
     label: string; // "City, State"
@@ -82,10 +80,10 @@ export function SearchForm() {
 
                         const full = `${city}, ${state}`;
                         options.push({
-                            value: `${cityUpper}, ${state}`,
+                            value: full,
                             label: full,
                             state,
-                            city: cityUpper,
+                            city,
                         });
                     });
                 });
