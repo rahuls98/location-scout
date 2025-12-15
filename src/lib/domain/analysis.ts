@@ -232,38 +232,30 @@ interface DetailedState {
  * Hook for a single area's deeper dive panel.
  */
 export function useDetailedAnalysis(id?: string) {
-    const [state, setState] = useState<DetailedState>(() => {
-        if (!id) return { loading: false, error: null, data: null };
-        const cached = readDetailedCacheEntry(id);
-        return {
-            loading: false,
-            error: null,
-            data: cached || null,
-        };
+    const [state, setState] = useState<DetailedState>({
+        loading: false,
+        error: null,
+        data: null,
     });
 
-    // Keep local state in sync when the detailed analysis id changes.
+    // Client-only cache sync (post-hydration, no SSR issues)
     useEffect(() => {
-        if (!id) {
+        if (!id || typeof window === "undefined") {
             setState({ loading: false, error: null, data: null });
             return;
         }
 
         const cached = readDetailedCacheEntry(id);
-        if (cached) {
-            setState({ loading: false, error: null, data: cached });
-        } else {
-            setState({ loading: false, error: null, data: null });
-        }
+        setState({ loading: false, error: null, data: cached || null });
     }, [id]);
 
     const loadDetailedArea = useCallback(
         async (input: DetailedInput) => {
-            // Use provided id or generate consistent cache ID
+            // Generate consistent cacheId using current id/input (no stale closure)
             const cacheId =
                 id || `${input.business}|${input.location}|${input.area}`;
 
-            // Always check cache first using the final cacheId
+            // Check cache first
             const cached = readDetailedCacheEntry(cacheId);
             if (cached) {
                 setState({ loading: false, error: null, data: cached });
@@ -286,7 +278,7 @@ export function useDetailedAnalysis(id?: string) {
             }
         },
         [id]
-    ); // id is now a dependency
+    );
 
     return {
         loading: state.loading,
