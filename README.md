@@ -2,7 +2,7 @@
 
 Location Scout helps small business owners identify strong brick-and-mortar locations. Users enter a business type and city, such as “coffee shop” and “Boston, MA.” The app analyzes Yelp data to map competitor density, scores neighborhoods using AI for saturation and market gaps, and ranks top opportunities. It also gives detailed analysis of recommended neighborhoods with interactive maps, demographic insights, competitor comparisons, review summaries, and service recommendations. This turns complex data into a clear checklist for differentiation.
 
-[Read more]([https://location-scout.vercel.app](https://devpost.com/software/location-scout)) · [Live Demo](https://location-scout.netlify.app/)
+[Read more](https://devpost.com/software/location-scout) · [Live Demo](https://location-scout.netlify.app/)
 
 ## Quick Start
 
