@@ -4,10 +4,6 @@ Location Scout helps small business owners identify strong brick-and-mortar loca
 
 [Read more](https://location-scout.vercel.app) · [Live Demo](https://location-scout.vercel.app)
 
-## Demo
-
-[Live Demo](https://location-scout.vercel.app)
-
 ## Quick Start
 
 1. Clone the repo
