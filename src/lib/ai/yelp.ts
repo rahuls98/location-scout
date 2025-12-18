@@ -79,20 +79,20 @@ export async function fetchDetailedAreaFromYelpAI(input: {
     const yelpText: string = data?.response?.text || "";
     const parsed = await parseDetailedAreaWithLLM(yelpText, area);
 
-    let serviceInsights = "";
-    try {
-        serviceInsights = await fetchServiceOfferingInsightsFromYelpAI(
-            business,
-            area,
-            location
-        );
-    } catch (error) {
-        console.warn("Yelp AI service offering insights failed:", error);
-    }
+    // let serviceInsights = "";
+    // try {
+    //     serviceInsights = await fetchServiceOfferingInsightsFromYelpAI(
+    //         business,
+    //         area,
+    //         location
+    //     );
+    // } catch (error) {
+    //     console.warn("Yelp AI service offering insights failed:", error);
+    // }
 
     const merged: DetailedAreaData = {
         ...parsed,
-        service_insights: serviceInsights || parsed.service_insights,
+        // service_insights: serviceInsights || parsed.service_insights,
     };
 
     return { data: merged, yelpText };

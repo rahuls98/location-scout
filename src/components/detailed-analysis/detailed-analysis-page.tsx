@@ -379,7 +379,7 @@ export default function DetailedAnalysisPage({
                                 business={business}
                                 area={area}
                                 location={location}
-                                initialInsights={service_insights}
+                                // initialInsights={service_insights}
                             />
                         </section>
                     </div>
